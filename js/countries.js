@@ -205,6 +205,18 @@ const REGIONS = {
     'sahara':            { countries:['012','148','434','466','478','504','562','729','788'] },
     'sub-saharan africa':{ countries:Object.keys(COUNTRIES).filter(id => COUNTRIES[id].continent==='africa' && COUNTRIES[id].lat < 20) },
     'horn of africa':    { countries:['231','232','262','706'] },
+    'west africa':       { countries:['854','120','384','288','324','430','466','478','562','566','686','694','768'] },
+    'east africa':       { countries:['108','231','232','262','404','450','454','508','646','706','800','834','716','894'] },
+    'southern africa':   { countries:['024','072','426','516','710','716','894'] },
+    'north africa':      { countries:['012','818','434','504','729','788'] },
+    'eastern europe':    { countries:['100','112','203','348','498','616','642','643','703','804'] },
+    'western europe':    { countries:['040','056','250','276','372','442','528','826','756'] },
+    'northern europe':   { countries:['208','233','246','352','428','440','578','752'] },
+    'andes':             { countries:['032','068','152','170','218','604'] },
+    'amazon':            { countries:['076','218','604','862'] },
+    'himalayas':         { countries:['156','356','524','586','064'] },
+    'iberia':            { countries:['620','724'] },
+    'british isles':     { countries:['826','372'] },
 };
 
 const ALL_COUNTRY_IDS = Object.keys(COUNTRIES);

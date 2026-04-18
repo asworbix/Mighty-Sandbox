@@ -55,7 +55,12 @@ const Events = (() => {
 
     /* visual effect spawner per kind */
     function spawnVisuals(ev, world) {
-        const ids = ev.targets || [];
+        let ids = ev.targets || [];
+        // cap visual emitters for world-scale events (effects still apply to state)
+        if (ids.length > 10) {
+            const sorted = ids.slice().sort((a, b) => (COUNTRIES[b]?.pop || 0) - (COUNTRIES[a]?.pop || 0));
+            ids = sorted.slice(0, 10);
+        }
         for (const id of ids) {
             const c = COUNTRIES[id];
             if (!c) continue;
@@ -180,7 +185,11 @@ const Events = (() => {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         for (const ev of active) {
-            for (const id of ev.targets.slice(0, 4)) {
+            const cap = ev.targets.length > 20 ? 6 : Math.min(4, ev.targets.length);
+            const sortedForLabels = ev.targets.length > 20
+                ? ev.targets.slice().sort((a,b) => (COUNTRIES[b]?.pop||0) - (COUNTRIES[a]?.pop||0)).slice(0, cap)
+                : ev.targets.slice(0, cap);
+            for (const id of sortedForLabels) {
                 const c = COUNTRIES[id];
                 if (!c) continue;
                 const p = projection([c.lon, c.lat]);
