@@ -218,8 +218,9 @@ const UI = (() => {
         const c = COUNTRIES[id];
         const cs = world.countryState[id];
         if (!c) { el.tooltip.classList.add('hidden'); return; }
+        const flag = flagEmoji(id);
         el.tooltip.innerHTML = `
-            <div class="tt-name">${c.name}</div>
+            <div class="tt-name">${flag ? flag + ' ' : ''}${c.name}</div>
             <div class="tt-row"><span>Population</span><b>${formatPop(cs.pop)}</b></div>
             <div class="tt-row"><span>Culture</span><b>${CULTURES[c.culture].name}</b></div>
             <div class="tt-row"><span>Happiness</span><b>${pct(cs.happy)}</b></div>
@@ -236,7 +237,8 @@ const UI = (() => {
         const c = COUNTRIES[id];
         const cs = world.countryState[id];
         if (!c || !cs) return;
-        el.cdName.textContent = c.name;
+        const flag = flagEmoji(id);
+        el.cdName.textContent = (flag ? flag + '  ' : '') + c.name;
         el.cdPop.textContent = formatPop(cs.pop);
         el.cdCulture.textContent = CULTURES[c.culture].name + ' · ' + CULTURES[c.culture].signature;
         el.cdHappy.textContent = pct(cs.happy);
