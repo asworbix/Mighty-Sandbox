@@ -762,6 +762,22 @@ body {
 .modal-body ul { margin: 6px 0 12px; padding-left: 20px; }
 .modal-body li { margin-bottom: 4px; color: var(--text-dim); }
 .modal-body .muted { color: var(--text-mute); font-size: 12px; }
+.modal-body code {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    color: var(--accent);
+}
+.modal-body em {
+    font-style: normal;
+    color: var(--text);
+    padding: 2px 6px;
+    background: rgba(0,231,255,0.06);
+    border-radius: 4px;
+}
 
 /* ============ Event flash / screen shake ============ */
 
