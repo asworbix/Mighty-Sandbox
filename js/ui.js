@@ -233,7 +233,35 @@ const UI = (() => {
             el.cdActivity.textContent = '—';
         }
 
+        // sparkline
+        renderSparkline(cs.history || []);
+
         el.countryDetail.classList.remove('hidden');
+    }
+
+    function renderSparkline(history) {
+        const svg = document.getElementById('cdSpark');
+        if (!svg) return;
+        svg.innerHTML = '';
+        if (!history.length) return;
+        const w = 220, h = 46;
+        const step = w / Math.max(1, history.length - 1);
+        const pathFor = (key, color) => {
+            let d = '';
+            history.forEach((pt, i) => {
+                const v = pt[key];
+                const x = i * step;
+                const y = h - (v * (h - 4)) - 2;
+                d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1) + ' ';
+            });
+            return `<path d="${d}" stroke="${color}" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`;
+        };
+        svg.innerHTML =
+            `<line x1="0" y1="${h-2}" x2="${w}" y2="${h-2}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>` +
+            `<line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="rgba(255,255,255,0.03)" stroke-width="1" stroke-dasharray="2 3"/>` +
+            pathFor('h', '#6bf1a0') +
+            pathFor('p', '#7aa2ff') +
+            pathFor('e', '#ffd36b');
     }
 
     function pad2(n) { return (n < 10 ? '0' : '') + n; }

@@ -167,9 +167,27 @@ function parsePrompt(raw) {
     if (!text) return null;
 
     // "help", "what can I do" etc.
-    if (/\b(help|how|what can|commands?)\b/.test(text) && text.length < 30) {
+    if (/^(help|\?|what can i do|commands?)$/.test(text)) {
         return { type:'help' };
     }
+
+    // Gaia introspection: "status", "how is the world", "summary", "report"
+    if (/^(status|report|summary|summarise|summarize|how('s| is) (the )?world|how are things|state of the world|gaia\??|hi gaia|hello gaia)$/.test(text)) {
+        return { type:'introspect' };
+    }
+
+    // Greetings to Gaia
+    if (/^(hello|hi|hey|yo|sup|namaste|salaam|hola|bonjour|konnichiwa|howdy)\s*(gaia)?\s*[!.?]*$/.test(text)) {
+        return { type:'greet' };
+    }
+
+    // Easter eggs
+    if (/(konami|42|the answer|cheat|god mode)/.test(text)) return { type:'easter', which:'god' };
+    if (/(thanos|snap|half the universe)/.test(text)) return { type:'easter', which:'thanos' };
+    if (/(wakanda|bucket list|wakanda forever)/.test(text)) return { type:'easter', which:'wakanda' };
+    if (/(long live the king|hail)/.test(text)) return { type:'easter', which:'king' };
+    if (/(rapture|judgement day|end times|apocalypse|armageddon)/.test(text)) return { type:'easter', which:'apocalypse' };
+    if (/(love|kindness everywhere|kind)/.test(text) && text.length < 30) return { type:'easter', which:'love' };
 
     // "pause", "resume"
     if (/^(pause|stop|freeze)$/.test(text)) return { type:'control', action:'pause' };

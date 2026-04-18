@@ -27,7 +27,17 @@ const Main = (() => {
                 peace:   jitter(b.peace),
                 health:  jitter(b.health),
                 climate: jitter(b.climate),
+                history: [],   // ring buffer of recent snapshots
             };
+        }
+    }
+
+    /* snapshot per-country history for sparklines */
+    function snapshotHistory() {
+        for (const id of ALL_COUNTRY_IDS) {
+            const cs = world.countryState[id]; if (!cs) continue;
+            cs.history.push({ h: cs.happy, p: cs.peace, e: cs.econ, hl: cs.health });
+            if (cs.history.length > 40) cs.history.shift();
         }
     }
     function jitter(v) { return Math.max(0, Math.min(1, v + (Math.random() - 0.5) * 0.1)); }
@@ -103,6 +113,7 @@ const Main = (() => {
         if (statsTimer > 330) {
             UI.updateStats();
             UI.updateClock();
+            snapshotHistory();
             statsTimer = 0;
             // refresh country detail if open
             const id = MapView.clickedId;
@@ -187,6 +198,19 @@ const Main = (() => {
 
         if (parsed.type === 'help') {
             document.getElementById('helpModal').classList.remove('hidden');
+            return;
+        }
+        if (parsed.type === 'greet') {
+            UI.log('Gaia hears you. She tilts her head, gently curious.', 'good');
+            UI.log('<em>Say the word and I will make it rain, or burn, or bloom.</em>', 'info');
+            return;
+        }
+        if (parsed.type === 'introspect') {
+            introspect();
+            return;
+        }
+        if (parsed.type === 'easter') {
+            runEasterEgg(parsed.which);
             return;
         }
         if (parsed.type === 'control') {
@@ -290,6 +314,116 @@ const Main = (() => {
                     }, i * 600);
                 });
             }, 900);
+        }
+    }
+
+    /* Gaia's self-introspection. Long-form report of current state. */
+    function introspect() {
+        const ids = ALL_COUNTRY_IDS;
+        let total = 0, hSum = 0, eSum = 0, pSum = 0, hlSum = 0, clSum = 0, w = 0;
+        let rich = null, poor = null, happy = null, sad = null, peace = null, war = null, sick = null, healthy = null;
+        for (const id of ids) {
+            const cs = world.countryState[id]; if (!cs) continue;
+            total += cs.pop;
+            const weight = cs.pop;
+            hSum += cs.happy * weight; eSum += cs.econ * weight; pSum += cs.peace * weight;
+            hlSum += cs.health * weight; clSum += cs.climate * weight; w += weight;
+            if (!rich  || cs.econ  > rich.v)  rich  = { id, v: cs.econ };
+            if (!poor  || cs.econ  < poor.v)  poor  = { id, v: cs.econ };
+            if (!happy || cs.happy > happy.v) happy = { id, v: cs.happy };
+            if (!sad   || cs.happy < sad.v)   sad   = { id, v: cs.happy };
+            if (!peace || cs.peace > peace.v) peace = { id, v: cs.peace };
+            if (!war   || cs.peace < war.v)   war   = { id, v: cs.peace };
+            if (!healthy|| cs.health> healthy.v) healthy = { id, v: cs.health };
+            if (!sick  || cs.health < sick.v) sick  = { id, v: cs.health };
+        }
+        const era = History.eraAt(world.clock.getUTCFullYear());
+        const y = world.clock.getUTCFullYear();
+        const yearStr = y < 0 ? Math.abs(y) + ' BCE' : y;
+
+        UI.log(`<b>Gaia whispers a report —</b> ${yearStr}, the <b>${era.name}</b>.`, 'info');
+        UI.log(`Earth holds <b>${formatPopB(total)}</b> souls. Average mood <b>${Math.round(hSum/w*100)}%</b>, peace <b>${Math.round(pSum/w*100)}%</b>.`, 'info');
+        if (happy) UI.log(`Happiness is brightest in <b>${COUNTRIES[happy.id].name}</b>, dimmest in <b>${COUNTRIES[sad.id].name}</b>.`, 'info');
+        if (rich)  UI.log(`Wealth gathers in <b>${COUNTRIES[rich.id].name}</b>; is thin in <b>${COUNTRIES[poor.id].name}</b>.`, 'info');
+        if (peace) UI.log(`Quietest country: <b>${COUNTRIES[peace.id].name}</b>. Most tense: <b>${COUNTRIES[war.id].name}</b>.`, 'info');
+        if (healthy)UI.log(`Healthiest: <b>${COUNTRIES[healthy.id].name}</b>. Most troubled health: <b>${COUNTRIES[sick.id].name}</b>.`, 'info');
+
+        const active = Events.active;
+        if (active.length) {
+            UI.log(`<b>${active.length}</b> active event${active.length===1?'':'s'} ripple${active.length===1?'s':''} through the world:`, 'info');
+            for (const ev of active.slice(0, 4)) {
+                UI.log('&nbsp;&nbsp;' + Narrator.headline(ev), moodClass(ev.mood));
+            }
+        } else {
+            UI.log('For this moment, the world is quiet.', 'info');
+        }
+    }
+
+    function formatPopB(m) {
+        if (m >= 1000) return (m/1000).toFixed(2) + 'B';
+        if (m >= 1) return m.toFixed(0) + 'M';
+        return (m*1000).toFixed(0) + 'K';
+    }
+    function pickRandom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+    /* Easter eggs */
+    function runEasterEgg(which) {
+        if (which === 'god') {
+            UI.log('<b>GOD MODE.</b> All achievements unlocked. The world glows.', 'good');
+            for (const a of Achievements.LIST) Achievements.unlock(a.id);
+            // global blessing
+            fireEvent({
+                type:'event', kind:'miracle', severity:1, duration:45, mood:'good',
+                label:'Divine Attention', emoji:'🌟', targets: ALL_COUNTRY_IDS.slice(),
+                locationLabel:'worldwide',
+            }, {});
+        }
+        if (which === 'thanos') {
+            UI.log('<em>Perfectly balanced, as all things should be.</em>', 'warn');
+            // halve population everywhere
+            for (const id of ALL_COUNTRY_IDS) world.countryState[id].pop *= 0.5;
+            fireEvent({
+                type:'event', kind:'migration', severity:1, duration:60, mood:'bad',
+                label:'The Snap', emoji:'🫰', targets: ALL_COUNTRY_IDS.slice(),
+                locationLabel:'worldwide',
+            }, {});
+        }
+        if (which === 'wakanda') {
+            UI.log('Wakanda forever.', 'good');
+            fireEvent({
+                type:'event', kind:'innovation', severity:1, duration:60, mood:'good',
+                label:'Vibranium Discovered', emoji:'⚡', targets: ['716','710','566'],
+                locationLabel:'in southern Africa',
+            }, {});
+        }
+        if (which === 'king') {
+            UI.log('Long live the king.', 'info');
+            fireEvent({
+                type:'event', kind:'festival', severity:0.9, duration:40, mood:'good',
+                label:'A New Monarch', emoji:'👑', targets: [pickRandom(ALL_COUNTRY_IDS)],
+                locationLabel:'somewhere in the kingdoms',
+            }, {});
+        }
+        if (which === 'apocalypse') {
+            UI.log('<b>The sky darkens.</b> Listen carefully…', 'bad');
+            fireEvent({
+                type:'event', kind:'meteor', severity:1, duration:40, mood:'bad', shake:true,
+                label:'Apocalypse', emoji:'☄', targets: ALL_COUNTRY_IDS.slice(),
+                locationLabel:'worldwide',
+            }, {});
+            setTimeout(() => fireEvent({
+                type:'event', kind:'plague', severity:1, duration:120, mood:'bad',
+                label:'Four Horsemen Ride', emoji:'☠', targets: ALL_COUNTRY_IDS.slice(),
+                locationLabel:'worldwide',
+            }, {}), 2000);
+        }
+        if (which === 'love') {
+            UI.log('Kindness ripples out from you across the Earth.', 'good');
+            fireEvent({
+                type:'event', kind:'peace', severity:0.8, duration:90, mood:'good',
+                label:'A Wave of Love', emoji:'💚', targets: ALL_COUNTRY_IDS.slice(),
+                locationLabel:'worldwide',
+            }, {});
         }
     }
 
