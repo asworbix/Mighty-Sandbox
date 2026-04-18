@@ -44,24 +44,34 @@ const Main = (() => {
 
     /* Bootstrap the whole app. */
     async function start() {
-        UI.boot('seeding 4,200 souls…');
+        const bootEl = (msg, p) => {
+            if (typeof UI !== 'undefined' && UI.boot) UI.boot(msg, p);
+            else {
+                const b = document.getElementById('bootStatus'); if (b) b.textContent = msg;
+                const bar = document.querySelector('.boot-bar-fill'); if (bar && typeof p === 'number') bar.style.width = p + '%';
+            }
+        };
+        bootEl('loading cultures and countries…', 10);
         Achievements.load();
 
         // world state
+        bootEl('seeding ~4,200 souls…', 25);
         seedCountryState();
         Population.init();
 
-        UI.boot('drawing continents…');
+        bootEl('drawing continents…', 55);
         await MapView.init(world);
 
+        bootEl('calling forth the weather…', 75);
         Weather.init();
 
         // hook up UI
+        bootEl('assembling the HUD…', 90);
         UI.init(world);
         Ticker.init(world);
 
         // dismiss boot
-        UI.boot('ready.');
+        bootEl('ready.', 100);
         setTimeout(() => {
             document.getElementById('boot').classList.add('fade');
             setTimeout(() => document.getElementById('boot').remove(), 1200);
@@ -131,15 +141,18 @@ const Main = (() => {
         if (world.speed > 0 && Math.random() < 0.02 * (dt/16)) {
             Arcs.spawnAmbientTrade();
         }
+        if (Math.random() < 0.0012 * (dt/16)) spawnShootingStar();
 
         requestAnimationFrame(loop);
     }
 
-    /* Prevent extreme drift over time: each country slowly returns toward its era baseline. */
+    /* Prevent extreme drift over time: each country slowly returns toward its era baseline.
+       Also apply simple demographic drift: healthy/peaceful countries grow; troubled shrink. */
     function driftToBaseline(dt) {
         const era = History.eraAt(world.clock.getUTCFullYear());
         const b = era.base;
         const rate = 0.00005 * dt;
+        const popRate = 0.0000008 * dt * Math.max(1, world.speed);
         for (const id of ALL_COUNTRY_IDS) {
             const s = world.countryState[id];
             s.happy   += (b.happy   - s.happy)   * rate;
@@ -147,6 +160,11 @@ const Main = (() => {
             s.peace   += (b.peace   - s.peace)   * rate;
             s.health  += (b.health  - s.health)  * rate;
             s.climate += (b.climate - s.climate) * rate;
+
+            // demographics: a country's pop shifts toward health*peace
+            const target = COUNTRIES[id].pop * b.pop * (0.4 + s.health * 0.5 + s.peace * 0.2);
+            s.pop += (target - s.pop) * popRate;
+            if (s.pop < 0.01) s.pop = 0.01;
         }
     }
 
@@ -365,6 +383,16 @@ const Main = (() => {
         return (m*1000).toFixed(0) + 'K';
     }
     function pickRandom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+    function spawnShootingStar() {
+        const s = document.createElement('div');
+        s.className = 'shooting-star';
+        s.style.top = (5 + Math.random() * 40) + '%';
+        s.style.left = -10 + 'vw';
+        s.style.animationDuration = (1.6 + Math.random() * 1.4) + 's';
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 3200);
+    }
 
     /* Easter eggs */
     function runEasterEgg(which) {

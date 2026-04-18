@@ -121,7 +121,10 @@ const MapView = (() => {
 
     function toggleMode() {
         mode = mode === 'flat' ? 'globe' : 'flat';
-        // rebuild projection (different instance)
+        // reset camera so the switch always looks clean
+        scale = 260;
+        translate = [0, 0];
+        if (mode === 'globe') rotate = [-10, -15, 0];
         projection = makeProjection();
         updateProjection();
         autoRotate = mode === 'globe';

@@ -44,13 +44,33 @@ const UI = (() => {
             });
         });
 
-        // prompt
+        // prompt + history
+        const promptHistory = [];
+        let historyIndex = -1;
         el.promptForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const v = el.promptInput.value.trim();
             if (!v) return;
+            if (promptHistory[promptHistory.length - 1] !== v) {
+                promptHistory.push(v);
+                if (promptHistory.length > 40) promptHistory.shift();
+            }
+            historyIndex = promptHistory.length;
             Main.handlePrompt(v);
             el.promptInput.value = '';
+        });
+        el.promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (promptHistory.length === 0) return;
+                historyIndex = Math.max(0, historyIndex - 1);
+                el.promptInput.value = promptHistory[historyIndex] || '';
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (promptHistory.length === 0) return;
+                historyIndex = Math.min(promptHistory.length, historyIndex + 1);
+                el.promptInput.value = promptHistory[historyIndex] || '';
+            }
         });
         document.querySelectorAll('.chip').forEach(c => {
             c.addEventListener('click', () => {
@@ -412,7 +432,11 @@ const UI = (() => {
         }, 6000);
     }
 
-    function boot(msg) { el.bootStatus.textContent = msg; }
+    function boot(msg, progress) {
+        if (el.bootStatus) el.bootStatus.textContent = msg;
+        const bar = document.querySelector('.boot-bar-fill');
+        if (bar && typeof progress === 'number') bar.style.width = progress + '%';
+    }
 
     return {
         init,
