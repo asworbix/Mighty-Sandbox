@@ -67,8 +67,21 @@ const MapView = (() => {
             updateProjection();
         });
 
-        // load world atlas
-        const atlas = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+        // load world atlas (with CDN fallback)
+        const CDNS = [
+            'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
+            'https://unpkg.com/world-atlas@2/countries-110m.json',
+        ];
+        let atlas = null;
+        for (const url of CDNS) {
+            try { atlas = await d3.json(url); if (atlas) break; }
+            catch (e) { console.warn('atlas fetch failed:', url, e); }
+        }
+        if (!atlas) {
+            const b = document.getElementById('bootStatus');
+            if (b) b.textContent = 'could not load world atlas. check your connection.';
+            throw new Error('atlas unavailable');
+        }
         land = topojson.feature(atlas, atlas.objects.land);
         countriesGeo = topojson.feature(atlas, atlas.objects.countries).features;
         graticule = d3.geoGraticule10();

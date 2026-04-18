@@ -385,25 +385,40 @@ const UI = (() => {
             const u = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
             return Math.round(TL_MIN_YEAR + u * (TL_MAX_YEAR - TL_MIN_YEAR));
         }
+        let lastDragYear = null;
         rail.addEventListener('mousedown', (e) => {
             dragging = true;
-            Main.travelTo(toYear(e));
+            lastDragYear = toYear(e);
+            Main.travelTo(lastDragYear, true);
         });
         window.addEventListener('mousemove', (e) => {
             if (!dragging) return;
-            Main.travelTo(toYear(e), true);
+            lastDragYear = toYear(e);
+            Main.travelTo(lastDragYear, true);
         });
-        window.addEventListener('mouseup', () => { dragging = false; });
+        window.addEventListener('mouseup', () => {
+            if (dragging && lastDragYear != null) {
+                Main.travelTo(lastDragYear);  // loud: show banner + events
+            }
+            dragging = false;
+            lastDragYear = null;
+        });
         // touch
         rail.addEventListener('touchstart', (e) => {
             dragging = true;
-            Main.travelTo(toYear(e.touches[0]));
+            lastDragYear = toYear(e.touches[0]);
+            Main.travelTo(lastDragYear, true);
         });
         window.addEventListener('touchmove', (e) => {
             if (!dragging) return;
-            Main.travelTo(toYear(e.touches[0]), true);
+            lastDragYear = toYear(e.touches[0]);
+            Main.travelTo(lastDragYear, true);
         });
-        window.addEventListener('touchend', () => { dragging = false; });
+        window.addEventListener('touchend', () => {
+            if (dragging && lastDragYear != null) Main.travelTo(lastDragYear);
+            dragging = false;
+            lastDragYear = null;
+        });
     }
 
     function pctFromYear(y) {

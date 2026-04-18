@@ -103,18 +103,20 @@ const Main = (() => {
             world.clock = new Date(world.clock.getTime() + simMinutes * 60 * 1000);
         }
 
-        // tick simulation at ~30 FPS pace
+        // atmosphere always ticks (visual continuity even when paused)
         Weather.tick(dt);
-        Events.tick(world, dt);
-        Arcs.tick(dt);
         Ticker.tick(dt);
-        Population.tick(world, dt * Math.max(1, world.speed / 4));
+        // sim ticks only when time is flowing
+        const simDt = world.speed > 0 ? dt : 0;
+        Events.tick(world, simDt);
+        Arcs.tick(simDt);
+        Population.tick(world, simDt * Math.max(1, world.speed / 4));
 
         // maybe trigger historical events as time passes
-        maybeFireHistoricalEvents(dt);
+        if (simDt > 0) maybeFireHistoricalEvents(simDt);
 
         // ambient drift: states slowly move toward era baseline
-        driftToBaseline(dt);
+        if (simDt > 0) driftToBaseline(simDt);
 
         // render
         MapView.render(world);
@@ -289,6 +291,7 @@ const Main = (() => {
         }
         Achievements.noteEvent(ev);
         Quests.trigger(ev, {});
+        if (typeof Ticker !== 'undefined') Ticker.refresh();
     }
 
     function moodClass(m) {
@@ -304,7 +307,8 @@ const Main = (() => {
     function travelTo(year, silent = false) {
         year = Math.max(-3000, Math.min(2300, year));
         const current = world.clock.getUTCFullYear();
-        if (year === current) return;
+        // skip no-op silent travels (e.g., continuous drag within same year)
+        if (silent && year === current) return;
 
         world.clock = new Date(Date.UTC(year, 5, 21, 12, 0, 0));
         const era = History.eraAt(year);
