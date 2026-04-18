@@ -86,6 +86,15 @@ const Main = (() => {
         // initial log
         UI.log('<b>Gaia is awake.</b> Speak into the prompt to shape the world.', 'good');
         UI.log('Try <b>earthquake in Japan</b>, <b>travel to 1969</b>, or <b>festival in Rio</b>.', 'info');
+
+        // honor ?y=YEAR in the URL for shareable time-travel links
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const y = parseInt(params.get('y'));
+            if (!isNaN(y)) {
+                setTimeout(() => travelTo(y), 600);
+            }
+        } catch(e) {}
     }
 
     /* Main game loop. */

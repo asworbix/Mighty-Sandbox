@@ -119,6 +119,13 @@ const UI = (() => {
         initTimeline();
         el.timelineNow.addEventListener('click', () => Main.travelTo(new Date().getUTCFullYear()));
 
+        // click clock to copy a share URL at current year
+        if (el.clock) {
+            el.clock.style.cursor = 'pointer';
+            el.clock.title = 'Click to copy a shareable link at this moment';
+            el.clock.addEventListener('click', copyShareLink);
+        }
+
         // tooltip tracking
         MapView.onHover((id, pos) => {
             if (!id || !COUNTRIES[id]) {
@@ -460,6 +467,20 @@ const UI = (() => {
             i = (i + 1) % HINTS.length;
             el.promptHint.innerHTML = 'Try: ' + HINTS[i].split(' · ').map(s => `<em>${s}</em>`).join(' · ');
         }, 6000);
+    }
+
+    function copyShareLink() {
+        const y = world.clock.getUTCFullYear();
+        const url = new URL(window.location.href);
+        url.searchParams.set('y', y);
+        const s = url.toString();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(s).then(() => {
+                log(`Shareable link copied — jumps to <b>${y < 0 ? Math.abs(y)+' BCE' : y}</b>.`, 'good');
+            }).catch(() => log('Could not access clipboard.', 'warn'));
+        } else {
+            log(`Share this URL: <em>${s}</em>`, 'info');
+        }
     }
 
     function boot(msg, progress) {
