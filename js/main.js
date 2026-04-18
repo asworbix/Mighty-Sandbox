@@ -48,6 +48,7 @@ const Main = (() => {
 
         // hook up UI
         UI.init(world);
+        Ticker.init(world);
 
         // dismiss boot
         UI.boot('ready.');
@@ -84,6 +85,8 @@ const Main = (() => {
         // tick simulation at ~30 FPS pace
         Weather.tick(dt);
         Events.tick(world, dt);
+        Arcs.tick(dt);
+        Ticker.tick(dt);
         Population.tick(world, dt * Math.max(1, world.speed / 4));
 
         // maybe trigger historical events as time passes
@@ -108,11 +111,14 @@ const Main = (() => {
             }
         }
 
-        // ambient: occasional small weather events (pure atmosphere)
+        // ambient: occasional small weather events and trade arcs
         ambientTimer += dt;
         if (ambientTimer > 9000 && world.speed > 0) {
             ambientTimer = 0;
             if (Math.random() < 0.5) spawnAmbientWeather();
+        }
+        if (world.speed > 0 && Math.random() < 0.02 * (dt/16)) {
+            Arcs.spawnAmbientTrade();
         }
 
         requestAnimationFrame(loop);
@@ -216,6 +222,7 @@ const Main = (() => {
     /* Fire an event (from user, history, or ambient). */
     function fireEvent(ev, opts = {}) {
         const rec = Events.add(ev, world);
+        Arcs.onEvent(ev);
         // screen shake + flash
         if (ev.shake) {
             document.body.classList.remove('shake');
@@ -263,6 +270,7 @@ const Main = (() => {
         const targetDots = Math.round(4200 * Math.max(0.05, era.base.pop));
         Population.scaleTo(targetDots);
         Events.clear();
+        Arcs.clear();
         Weather.clearAll();
         Weather.init();
 
@@ -287,6 +295,7 @@ const Main = (() => {
 
     function resetWorld() {
         Events.clear();
+        Arcs.clear();
         Weather.clearAll();
         Weather.init();
         world.clock = new Date(Date.UTC(2026, 3, 18, 12, 0, 0));

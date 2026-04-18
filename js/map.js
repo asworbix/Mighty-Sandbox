@@ -232,6 +232,9 @@ const MapView = (() => {
         // clouds (under effects)
         Weather.renderClouds(ctx, projection);
 
+        // arcs (trade / war / migration)
+        Arcs.render(ctx, projection);
+
         // city lights + people
         Population.render(ctx, projection, sun);
 
