@@ -64,6 +64,14 @@ const UI = (() => {
         el.helpClose.addEventListener('click', () => el.helpModal.classList.add('hidden'));
         el.helpModal.addEventListener('click', (e) => { if (e.target === el.helpModal) el.helpModal.classList.add('hidden'); });
 
+        // projection toggle
+        const projBtn = $('projBtn');
+        if (projBtn) projBtn.addEventListener('click', () => {
+            const next = MapView.toggleMode();
+            projBtn.textContent = next === 'globe' ? '🗺' : '🌐';
+            UI.log(next === 'globe' ? 'Gaia curves into a sphere. Drag to rotate.' : 'Gaia unrolls flat again.', 'info');
+        });
+
         // achievements
         el.achvBtn.addEventListener('click', () => openAchievements());
         el.achvClose.addEventListener('click', () => el.achvModal.classList.add('hidden'));

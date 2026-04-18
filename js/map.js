@@ -19,6 +19,8 @@ const MapView = (() => {
     let rotate = [-10, 0, 0];
     let onClickHandler = null;
     let onHoverHandler = null;
+    let mode = 'flat';         // 'flat' | 'globe'
+    let autoRotate = false;    // only for globe
 
     async function init(world) {
         canvas = document.getElementById('earth');
@@ -28,7 +30,7 @@ const MapView = (() => {
 
         resize();
 
-        projection = d3.geoNaturalEarth1().scale(scale).translate([width/2, height/2]);
+        projection = makeProjection();
         path = d3.geoPath(projection, ctx);
 
         // interactions
@@ -38,14 +40,29 @@ const MapView = (() => {
         window.addEventListener('resize', () => { resize(); updateProjection(); });
         canvas.addEventListener('wheel', onWheel, { passive: false });
 
-        // drag to pan
+        // drag to pan (flat) / rotate (globe)
         let drag = null;
-        canvas.addEventListener('mousedown', e => { drag = { x: e.clientX, y: e.clientY, tx: translate[0], ty: translate[1] }; });
+        canvas.addEventListener('mousedown', e => {
+            drag = {
+                x: e.clientX, y: e.clientY,
+                tx: translate[0], ty: translate[1],
+                r0: rotate[0], r1: rotate[1],
+            };
+            autoRotate = false;
+        });
         window.addEventListener('mouseup', () => drag = null);
         window.addEventListener('mousemove', e => {
             if (!drag) return;
-            translate[0] = drag.tx + (e.clientX - drag.x);
-            translate[1] = drag.ty + (e.clientY - drag.y);
+            if (mode === 'globe') {
+                const dx = (e.clientX - drag.x);
+                const dy = (e.clientY - drag.y);
+                const k = 0.4;
+                rotate[0] = drag.r0 + dx * k;
+                rotate[1] = Math.max(-89, Math.min(89, drag.r1 - dy * k));
+            } else {
+                translate[0] = drag.tx + (e.clientX - drag.x);
+                translate[1] = drag.ty + (e.clientY - drag.y);
+            }
             updateProjection();
         });
 
@@ -73,12 +90,42 @@ const MapView = (() => {
         });
     }
 
-    function updateProjection() {
-        projection
+    function makeProjection() {
+        if (mode === 'globe') {
+            return d3.geoOrthographic()
+                .scale(Math.min(width, height) * 0.42)
+                .translate([width/2 + translate[0], height/2 + translate[1]])
+                .rotate(rotate)
+                .clipAngle(90);
+        }
+        return d3.geoNaturalEarth1()
             .scale(scale)
             .translate([width/2 + translate[0], height/2 + translate[1]])
             .rotate(rotate);
+    }
+
+    function updateProjection() {
+        if (mode === 'globe') {
+            projection
+                .scale(Math.min(width, height) * 0.42 * (scale / 260))
+                .translate([width/2 + translate[0], height/2 + translate[1]])
+                .rotate(rotate);
+        } else {
+            projection
+                .scale(scale)
+                .translate([width/2 + translate[0], height/2 + translate[1]])
+                .rotate(rotate);
+        }
         path = d3.geoPath(projection, ctx);
+    }
+
+    function toggleMode() {
+        mode = mode === 'flat' ? 'globe' : 'flat';
+        // rebuild projection (different instance)
+        projection = makeProjection();
+        updateProjection();
+        autoRotate = mode === 'globe';
+        return mode;
     }
 
     function onWheel(e) {
@@ -149,6 +196,11 @@ const MapView = (() => {
 
     function render(world) {
         const sun = Weather.subsolarPoint(world.clock);
+
+        if (autoRotate) {
+            rotate[0] = (rotate[0] - 0.08) % 360;
+            updateProjection();
+        }
 
         ctx.save();
         ctx.clearRect(0, 0, width, height);
@@ -331,10 +383,13 @@ const MapView = (() => {
     return {
         init, render,
         zoomTo, resetView,
+        toggleMode,
+        setAutoRotate(v) { autoRotate = !!v; },
         onClick: onClick2, onHover,
         setClicked,
         countryAt,
         project,
+        get mode() { return mode; },
         get hoverId() { return hoverId; },
         get clickedId() { return clickedId; },
     };
