@@ -16,22 +16,22 @@ const EVENT_LIB = {
     wildfire:    { kind:'wildfire',    severity:0.6, mood:'bad',  duration:40, label:'Wildfire',      emoji:'🔥', keywords:['wildfire','forest fire','bushfire','firestorm'] },
     blizzard:    { kind:'blizzard',    severity:0.5, mood:'bad',  duration:30, label:'Blizzard',      emoji:'❄', keywords:['blizzard','snowstorm','whiteout'] },
     storm:       { kind:'storm',       severity:0.4, mood:'warn', duration:15, label:'Storm',         emoji:'⛈', keywords:['storm','thunderstorm','lightning'] },
-    meteor:      { kind:'meteor',      severity:0.9, mood:'bad',  duration:5,  label:'Meteor strike', emoji:'☄', shake:true,  keywords:['meteor','asteroid','meteorite','comet strike'] },
+    meteor:      { kind:'meteor',      severity:0.9, mood:'bad',  duration:5,  label:'Meteor strike', emoji:'☄', shake:true,  keywords:['meteor','asteroid','meteorite','comet strike','nuclear','nuke','atomic'] },
 
     // --- Blessings / positives ---
-    prosperity:  { kind:'prosperity',  severity:0.6, mood:'good', duration:60, label:'Era of prosperity', emoji:'✨', keywords:['prosperity','wealth','bless','blessing','golden age','renaissance','boom'] },
+    prosperity:  { kind:'prosperity',  severity:0.6, mood:'good', duration:60, label:'Era of prosperity', emoji:'✨', keywords:['prosperity','wealth','bless','blessing','golden age','renaissance','boom','silk road','trade route'] },
     peace:       { kind:'peace',       severity:0.6, mood:'good', duration:90, label:'Wave of peace',     emoji:'🕊', keywords:['peace','harmony','ceasefire','reconciliation'] },
     healing:     { kind:'healing',     severity:0.6, mood:'good', duration:30, label:'Healing wave',      emoji:'💚', keywords:['healing','heal','cure','remedy','panacea','vaccine'] },
     miracle:     { kind:'miracle',     severity:0.9, mood:'good', duration:20, label:'Miracle',           emoji:'🌟', keywords:['miracle','miraculous','divine'] },
-    festival:    { kind:'festival',    severity:0.5, mood:'good', duration:20, label:'Festival',          emoji:'🎉', keywords:['festival','celebration','carnival','party','parade'] },
+    festival:    { kind:'festival',    severity:0.5, mood:'good', duration:20, label:'Festival',          emoji:'🎉', keywords:['festival','celebration','carnival','party','parade','new year','olympics','olympic games','wedding','carnaval','mardi gras','holi','diwali','christmas','chanukah','eid'] },
     harvest:     { kind:'harvest',     severity:0.5, mood:'good', duration:30, label:'Bountiful harvest', emoji:'🌾', keywords:['harvest','bountiful','abundance'] },
-    innovation:  { kind:'innovation',  severity:0.7, mood:'good', duration:60, label:'Breakthrough',      emoji:'💡', keywords:['innovation','breakthrough','invention','discovery','eureka','technology leap','ai breakthrough'] },
+    innovation:  { kind:'innovation',  severity:0.7, mood:'good', duration:60, label:'Breakthrough',      emoji:'💡', keywords:['innovation','breakthrough','invention','discovery','eureka','technology leap','ai breakthrough','space race','moon landing','genius','scientific revolution','industrial revolution'] },
     baby_boom:   { kind:'baby_boom',   severity:0.7, mood:'good', duration:60, label:'Baby boom',         emoji:'👶', keywords:['baby boom','birth rate','fertility','population boom','baby'] },
 
     // --- Social / unrest ---
-    war:         { kind:'war',         severity:0.8, mood:'bad',  duration:90, label:'War',             emoji:'⚔', keywords:['war','invasion','battle','combat'] },
+    war:         { kind:'war',         severity:0.8, mood:'bad',  duration:90, label:'War',             emoji:'⚔', keywords:['war','invasion','battle','combat','conflict','crusade','crusades','conquest','skirmish'] },
     revolution:  { kind:'revolution',  severity:0.7, mood:'warn', duration:40, label:'Revolution',      emoji:'🔥', keywords:['revolution','uprising','revolt','rebellion','coup'] },
-    protest:     { kind:'protest',     severity:0.4, mood:'warn', duration:20, label:'Protest',         emoji:'✊', keywords:['protest','march','demonstration','strike'] },
+    protest:     { kind:'protest',     severity:0.4, mood:'warn', duration:20, label:'Protest',         emoji:'✊', keywords:['protest','march','demonstration','strike','riot','election','vote'] },
     migration:   { kind:'migration',   severity:0.5, mood:'warn', duration:40, label:'Migration',       emoji:'👣', keywords:['migration','exodus','refugees','diaspora'] },
 
     // --- Health ---
