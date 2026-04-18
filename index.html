@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Gaia — a living Earth simulation. Shape the world with a single prompt." />
+    <title>Gaia — A Living Earth</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%230a0a10' stroke='%2300e7ff' stroke-width='2'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%2300e7ff' stroke-width='1' opacity='.6'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div id="boot">
+        <div class="boot-inner">
+            <div class="boot-logo">GAIA</div>
+            <div class="boot-sub">a living Earth</div>
+            <div class="boot-bar"><div class="boot-bar-fill"></div></div>
+            <div class="boot-status" id="bootStatus">awakening the world…</div>
+        </div>
+    </div>
+
+    <main id="app" class="hidden">
+        <!-- background layers -->
+        <div class="stars"></div>
+        <div class="stars stars-2"></div>
+
+        <!-- main Earth canvas -->
+        <canvas id="earth"></canvas>
+
+        <!-- overlay svg for borders / effects -->
+        <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+
+        <!-- particles canvas (weather, disasters) -->
+        <canvas id="fx"></canvas>
+
+        <!-- header -->
+        <header class="hud top">
+            <div class="brand">
+                <div class="brand-glyph">◐</div>
+                <div class="brand-name">GAIA</div>
+                <div class="brand-tag">a living Earth</div>
+            </div>
+            <div class="clock" id="clock">
+                <div class="clock-date" id="clockDate">—</div>
+                <div class="clock-time" id="clockTime">—</div>
+            </div>
+            <div class="time-controls">
+                <button class="tc" data-speed="0" title="Pause">❚❚</button>
+                <button class="tc active" data-speed="1" title="1×">1×</button>
+                <button class="tc" data-speed="4" title="4×">4×</button>
+                <button class="tc" data-speed="24" title="24×">24×</button>
+                <button class="tc" data-speed="168" title="168×">168×</button>
+            </div>
+        </header>
+
+        <!-- world stats -->
+        <aside class="hud panel stats" id="statsPanel">
+            <div class="panel-head">
+                <span class="panel-title">World Pulse</span>
+                <span class="panel-dot"></span>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Population</div>
+                <div class="stat-value" id="statPop">—</div>
+                <div class="stat-bar"><div class="stat-bar-fill" id="statPopBar"></div></div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Happiness</div>
+                <div class="stat-value" id="statHappy">—</div>
+                <div class="stat-bar"><div class="stat-bar-fill good" id="statHappyBar"></div></div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Prosperity</div>
+                <div class="stat-value" id="statEcon">—</div>
+                <div class="stat-bar"><div class="stat-bar-fill gold" id="statEconBar"></div></div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Peace</div>
+                <div class="stat-value" id="statPeace">—</div>
+                <div class="stat-bar"><div class="stat-bar-fill blue" id="statPeaceBar"></div></div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Health</div>
+                <div class="stat-value" id="statHealth">—</div>
+                <div class="stat-bar"><div class="stat-bar-fill red" id="statHealthBar"></div></div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Climate</div>
+                <div class="stat-value" id="statClimate">—</div>
+                <div class="stat-bar"><div class="stat-bar-fill cyan" id="statClimateBar"></div></div>
+            </div>
+            <div class="panel-foot">
+                <span id="activeEventsCount">0</span> active events
+            </div>
+        </aside>
+
+        <!-- event log -->
+        <aside class="hud panel log" id="logPanel">
+            <div class="panel-head">
+                <span class="panel-title">Chronicle</span>
+                <button class="panel-btn" id="clearLog" title="Clear">✕</button>
+            </div>
+            <ul class="log-list" id="logList"></ul>
+        </aside>
+
+        <!-- country hover info -->
+        <div id="tooltip" class="tooltip hidden"></div>
+
+        <!-- country detail -->
+        <aside class="hud panel country-detail hidden" id="countryDetail">
+            <div class="panel-head">
+                <span class="panel-title" id="cdName">—</span>
+                <button class="panel-btn" id="cdClose">✕</button>
+            </div>
+            <div class="cd-row"><span>Population</span><b id="cdPop">—</b></div>
+            <div class="cd-row"><span>Culture</span><b id="cdCulture">—</b></div>
+            <div class="cd-row"><span>Happiness</span><b id="cdHappy">—</b></div>
+            <div class="cd-row"><span>Prosperity</span><b id="cdEcon">—</b></div>
+            <div class="cd-row"><span>Health</span><b id="cdHealth">—</b></div>
+            <div class="cd-row"><span>Peace</span><b id="cdPeace">—</b></div>
+            <div class="cd-row"><span>Local time</span><b id="cdTime">—</b></div>
+            <div class="cd-activity">
+                <div class="cd-activity-title">Right now…</div>
+                <div class="cd-activity-body" id="cdActivity">—</div>
+            </div>
+        </aside>
+
+        <!-- era banner (appears on time travel) -->
+        <div id="eraBanner" class="era-banner hidden">
+            <div class="era-year" id="eraYear">—</div>
+            <div class="era-name" id="eraName">—</div>
+            <div class="era-mood" id="eraMood">—</div>
+        </div>
+
+        <!-- timeline / time travel -->
+        <div class="timeline-wrap" id="timelineWrap">
+            <div class="timeline-head">
+                <span class="timeline-label">TIMELINE</span>
+                <span class="timeline-year" id="timelineYear">2026</span>
+                <button class="timeline-now" id="timelineNow" title="Return to present">now</button>
+            </div>
+            <div class="timeline-rail" id="timelineRail">
+                <div class="timeline-track"></div>
+                <div class="timeline-eras" id="timelineEras"></div>
+                <div class="timeline-marks" id="timelineMarks"></div>
+                <div class="timeline-handle" id="timelineHandle"></div>
+            </div>
+            <div class="timeline-hint">drag to travel · or type <em>travel to 1969</em></div>
+        </div>
+
+        <!-- prompt box -->
+        <section class="prompt-wrap">
+            <div class="prompt-hint" id="promptHint">
+                Try: <em>earthquake in Japan</em> · <em>bless the world with prosperity</em> · <em>festival in Rio</em> · <em>peace across Europe</em>
+            </div>
+            <form class="prompt" id="promptForm" autocomplete="off">
+                <div class="prompt-glyph">⟁</div>
+                <input type="text" id="promptInput" placeholder="shape the world…" spellcheck="false" />
+                <button type="submit" class="prompt-send" title="Send">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 12L21 4L13 21L11 13L3 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </form>
+            <div class="prompt-chips" id="promptChips">
+                <button class="chip" data-cmd="earthquake in California">🌎 earthquake in California</button>
+                <button class="chip" data-cmd="festival in Brazil">🎉 festival in Brazil</button>
+                <button class="chip" data-cmd="plague in medieval Europe">☠ plague in Europe</button>
+                <button class="chip" data-cmd="bless the world">✨ bless the world</button>
+                <button class="chip" data-cmd="rain over Sahara">🌧 rain over Sahara</button>
+                <button class="chip" data-cmd="peace in the middle east">🕊 peace in the middle east</button>
+                <button class="chip" data-cmd="baby boom in India">👶 baby boom in India</button>
+                <button class="chip" data-cmd="alien contact over New York">👽 alien contact over NYC</button>
+            </div>
+        </section>
+
+        <!-- help / about / achievements -->
+        <button class="hud help-btn" id="helpBtn" title="About">?</button>
+        <button class="hud achv-btn" id="achvBtn" title="Achievements">🏆</button>
+
+        <div class="modal hidden" id="achvModal">
+            <div class="modal-card">
+                <div class="modal-head">
+                    <div class="modal-title">Achievements</div>
+                    <button class="panel-btn" id="achvClose">✕</button>
+                </div>
+                <div class="modal-body">
+                    <ul class="achv-list" id="achvList"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="modal hidden" id="helpModal">
+            <div class="modal-card">
+                <div class="modal-head">
+                    <div class="modal-title">GAIA — a living Earth</div>
+                    <button class="panel-btn" id="helpClose">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p>You are looking at a miniature world. Thousands of simulated lives rise, work, love, sleep and dream across continents. Each region follows its own culture, rhythm, and time of day.</p>
+                    <p>Type anything into the prompt at the bottom to <b>shape the world</b>. The simulation understands natural language across many themes:</p>
+                    <ul>
+                        <li><b>Disasters:</b> earthquake, tsunami, volcano, flood, drought, hurricane, wildfire, blizzard, storm</li>
+                        <li><b>Blessings:</b> bless, prosper, peace, renaissance, golden age, miracle, healing</li>
+                        <li><b>Society:</b> festival, protest, war, revolution, migration, baby boom, exodus</li>
+                        <li><b>Health:</b> plague, cure, pandemic, vaccine</li>
+                        <li><b>Wonder:</b> aurora, eclipse, UFO, alien contact, nightfall, sunrise, snow, rainbow</li>
+                    </ul>
+                    <p>Specify a place with prepositions — <em>in Japan</em>, <em>over Europe</em>, <em>across Africa</em>, <em>worldwide</em> — or let Gaia choose.</p>
+                    <p>Click any country for details. Use the time controls to speed up life itself.</p>
+                    <p class="muted">No servers. No tracking. Everything runs in your browser.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- libs -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+
+    <!-- app -->
+    <script src="js/cultures.js"></script>
+    <script src="js/countries.js"></script>
+    <script src="js/parser.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/population.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/narrator.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
