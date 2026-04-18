@@ -90,6 +90,7 @@ const UI = (() => {
             const next = MapView.toggleMode();
             projBtn.textContent = next === 'globe' ? '🗺' : '🌐';
             UI.log(next === 'globe' ? 'Gaia curves into a sphere. Drag to rotate.' : 'Gaia unrolls flat again.', 'info');
+            if (next === 'globe') Quests.trigger(null, { kind:'globe' });
         });
 
         // data layer cycle
@@ -130,6 +131,9 @@ const UI = (() => {
             if (!COUNTRIES[id]) return;
             showCountryDetail(id);
             Achievements.noteClick(id);
+            if (Achievements.counters.countriesClicked.size >= 20) {
+                Quests.trigger(null, { kind:'click_tour' });
+            }
             el.tooltip.classList.add('hidden');
         });
 

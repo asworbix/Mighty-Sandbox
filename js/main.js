@@ -53,6 +53,7 @@ const Main = (() => {
         };
         bootEl('loading cultures and countries…', 10);
         Achievements.load();
+        Quests.load();
 
         // world state
         bootEl('seeding ~4,200 souls…', 25);
@@ -287,6 +288,7 @@ const Main = (() => {
             if (c) MapView.zoomTo(c.lat, c.lon, MapView.mode === 'globe' ? 330 : 560);
         }
         Achievements.noteEvent(ev);
+        Quests.trigger(ev, {});
     }
 
     function moodClass(m) {
@@ -317,6 +319,7 @@ const Main = (() => {
         Weather.init();
 
         Achievements.noteTravel(year);
+        Quests.trigger(null, { kind:'travel', year });
 
         if (!silent) {
             UI.showEraBanner(era, year);
