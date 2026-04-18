@@ -1022,6 +1022,43 @@ body {
 
 /* ============ Achievements ============ */
 
+.layer-btn {
+    bottom: 180px;
+    right: 18px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text-dim);
+    cursor: pointer;
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    font-size: 16px;
+    transition: 0.2s;
+}
+.layer-btn:hover { color: var(--accent); border-color: rgba(0,231,255,0.4); }
+.layer-label {
+    position: fixed;
+    bottom: 180px;
+    right: 62px;
+    z-index: 10;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 4px 8px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    pointer-events: none;
+    height: 30px;
+    display: flex; align-items: center;
+}
+
 .proj-btn {
     bottom: 126px;
     right: 18px;

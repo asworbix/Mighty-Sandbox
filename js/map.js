@@ -21,6 +21,7 @@ const MapView = (() => {
     let onHoverHandler = null;
     let mode = 'flat';         // 'flat' | 'globe'
     let autoRotate = false;    // only for globe
+    let dataLayer = 'mood';    // 'mood' | 'happy' | 'peace' | 'econ' | 'health' | 'climate' | 'pop'
 
     async function init(world) {
         canvas = document.getElementById('earth');
@@ -246,27 +247,8 @@ const MapView = (() => {
             const id = f.idStr;
             const cs = world.countryState[id];
             const country = COUNTRIES[id];
-            // color based on state (or neutral if unknown)
             let fill = '#1b2130';
-            if (cs) {
-                // Blend red->gold->green along happy axis
-                const h = cs.happy;
-                const p = cs.peace;
-                const e = cs.econ;
-                // base tone
-                fill = lerpColor('#2a1a2a', '#1b2130', 0.5);
-                // happy shifts green
-                const green = Math.max(0, h - 0.5) * 2;
-                const red = Math.max(0, 0.5 - h) * 2;
-                const gold = Math.max(0, e - 0.5) * 2;
-                fill = mix('#1b2130', [
-                    ['#2c4a36', green*0.6],
-                    ['#3a1824', red*0.6],
-                    ['#3a2d14', gold*0.3],
-                ]);
-                if (cs.peace < 0.3) fill = mix(fill, [['#441616', (0.3-cs.peace)*2]]);
-                if (cs.health < 0.3) fill = mix(fill, [['#331f40', (0.3-cs.health)*2]]);
-            }
+            if (cs) fill = tintForLayer(cs);
 
             ctx.beginPath();
             path(f);
@@ -330,6 +312,40 @@ const MapView = (() => {
         fxCtx.fillRect(0, 0, width, height);
     }
 
+    /* ---------- data layers → fill color ---------- */
+
+    function tintForLayer(cs) {
+        if (dataLayer === 'mood') {
+            const green = Math.max(0, cs.happy - 0.5) * 2;
+            const red   = Math.max(0, 0.5 - cs.happy) * 2;
+            const gold  = Math.max(0, cs.econ - 0.5) * 2;
+            let f = mix('#1b2130', [
+                ['#2c4a36', green*0.6],
+                ['#3a1824', red*0.6],
+                ['#3a2d14', gold*0.3],
+            ]);
+            if (cs.peace < 0.3) f = mix(f, [['#441616', (0.3-cs.peace)*2]]);
+            if (cs.health < 0.3) f = mix(f, [['#331f40', (0.3-cs.health)*2]]);
+            return f;
+        }
+        if (dataLayer === 'happy')   return heat(cs.happy,   '#3a1824', '#2c4a36');
+        if (dataLayer === 'peace')   return heat(cs.peace,   '#442a14', '#1f3a4a');
+        if (dataLayer === 'econ')    return heat(cs.econ,    '#2a1a2a', '#4a3a14');
+        if (dataLayer === 'health')  return heat(cs.health,  '#331f40', '#1f4a3a');
+        if (dataLayer === 'climate') return heat(cs.climate, '#4a2a14', '#1b3a4a');
+        if (dataLayer === 'pop')     {
+            // relative popularity (log scale)
+            const t = Math.min(1, Math.log10(Math.max(0.01, cs.pop)) / 3.2);
+            return heat(t, '#151a24', '#3a5a1a');
+        }
+        return '#1b2130';
+    }
+
+    function heat(v, lo, hi) {
+        const t = Math.max(0, Math.min(1, v));
+        return lerpColor(lo, hi, t);
+    }
+
     /* ---------- color helpers ---------- */
 
     function parseHex(h) {
@@ -383,16 +399,25 @@ const MapView = (() => {
     function onHover(fn) { onHoverHandler = fn; }
     function project(ll) { return projection(ll); }
 
+    const LAYER_ORDER = ['mood','happy','peace','econ','health','climate','pop'];
+    function cycleLayer() {
+        const i = LAYER_ORDER.indexOf(dataLayer);
+        dataLayer = LAYER_ORDER[(i + 1) % LAYER_ORDER.length];
+        return dataLayer;
+    }
+
     return {
         init, render,
         zoomTo, resetView,
         toggleMode,
+        cycleLayer,
         setAutoRotate(v) { autoRotate = !!v; },
         onClick: onClick2, onHover,
         setClicked,
         countryAt,
         project,
         get mode() { return mode; },
+        get dataLayer() { return dataLayer; },
         get hoverId() { return hoverId; },
         get clickedId() { return clickedId; },
     };

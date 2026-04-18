@@ -92,6 +92,14 @@ const UI = (() => {
             UI.log(next === 'globe' ? 'Gaia curves into a sphere. Drag to rotate.' : 'Gaia unrolls flat again.', 'info');
         });
 
+        // data layer cycle
+        const layerBtn = $('layerBtn');
+        const layerLabel = $('layerLabel');
+        if (layerBtn) layerBtn.addEventListener('click', () => {
+            const next = MapView.cycleLayer();
+            if (layerLabel) layerLabel.textContent = next;
+        });
+
         // achievements
         el.achvBtn.addEventListener('click', () => openAchievements());
         el.achvClose.addEventListener('click', () => el.achvModal.classList.add('hidden'));
