@@ -284,7 +284,7 @@ const Main = (() => {
         // zoom to action if single-country user event
         if (opts.userInitiated && ev.targets && ev.targets.length === 1) {
             const c = COUNTRIES[ev.targets[0]];
-            if (c) MapView.zoomTo(c.lat, c.lon, Math.max(MapView.scale || 400, 400));
+            if (c) MapView.zoomTo(c.lat, c.lon, MapView.mode === 'globe' ? 330 : 560);
         }
         Achievements.noteEvent(ev);
     }

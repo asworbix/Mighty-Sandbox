@@ -130,6 +130,7 @@ const UI = (() => {
             if (!COUNTRIES[id]) return;
             showCountryDetail(id);
             Achievements.noteClick(id);
+            el.tooltip.classList.add('hidden');
         });
 
         // keyboard shortcuts
