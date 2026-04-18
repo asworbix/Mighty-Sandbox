@@ -34,12 +34,21 @@ Jumping eras reseeds the world's baseline population, health, peace and prosperi
 | Key | Action |
 | --- | --- |
 | `/` | focus the prompt |
+| `↑` / `↓` | browse prompt history |
 | `space` | pause / resume |
 | `h` | help |
 | `r` | reset camera |
 | `esc` | close panels |
 | mouse-wheel | zoom |
-| drag on globe | pan |
+| drag on map | pan (flat) · rotate (globe) |
+| click the clock | copy a shareable time-travel link |
+
+**Buttons in the bottom-right**
+
+- 🌐 switch between a flat map and a spinning globe
+- ◎ cycle the data layer (mood / happy / peace / econ / health / climate / pop)
+- 🏆 open the achievements drawer
+- ? open help
 
 ---
 
@@ -67,19 +76,38 @@ Everything runs in the browser. No frameworks.
 index.html                     top-level page + HUD skeleton
 styles.css                     glassmorphic HUD styles
 js/
-  cultures.js                  cultural profiles (names, activities, colors)
-  countries.js                 ~130 countries w/ centroids + aliases
-  parser.js                    natural-language prompt → event
-  history.js                   eras + curated historical events; time travel
+  cultures.js                  16 cultural profiles (names, activities, colors)
+  countries.js                 ~130 countries, aliases, regions, flag mapping
+  parser.js                    natural-language prompt → event / travel / command
+  history.js                   14 eras + ~130 curated historical events
   weather.js                   clouds, storms, particles, day/night math
   events.js                    active-event manager + passive state effects
   population.js                ~4,200 dots distributed by country population
-  map.js                       D3 + TopoJSON Earth rendered into <canvas>
-  narrator.js                  Gaia's voice — turns events into prose
-  achievements.js              unlockables, saved in localStorage
-  ui.js                        HUD controller + timeline scrubber
-  main.js                      orchestrator + game loop
+  map.js                       D3 + TopoJSON Earth on canvas (flat + globe)
+  arcs.js                      animated arcs for trade, migration, war, blessing
+  ticker.js                    breaking-news strip across the top
+  narrator.js                  Gaia's voice — turns events into short prose
+  achievements.js              unlockables, localStorage-persisted
+  quests.js                    rotating objectives for new players
+  ui.js                        HUD controller, tooltip, timeline, modals
+  main.js                      orchestrator + game loop + time travel
 ```
+
+## Features
+
+- **Natural-language prompt parser** that covers disasters, blessings, wars, plagues, weather, society, wonder, and special cases. Intensity and duration modifiers are supported ("massive earthquake", "war for 3 days").
+- **Time travel** with a draggable timeline (3000 BCE → 2300 CE), 14 baseline eras, and ~130 real historical events that trigger when you arrive near them. Shareable `?y=YEAR` URLs.
+- **Two projections**: flat Natural Earth or a spinning orthographic globe. Auto-rotates when idle on the globe; drag to rotate.
+- **Day-night terminator** that follows the real sun position. City lights come on only at night.
+- **Seven data layers** you can cycle with the ◎ button: composite mood, happiness, peace, prosperity, health, climate, population.
+- **Live chronicle log** narrating every event in one-sentence prose.
+- **Breaking news ticker** showing the strongest and weakest countries on each metric, refreshed with every event.
+- **Per-country detail panel** with live stats, a random citizen's current activity, and a recent-trend sparkline.
+- **Animated arcs** connecting countries for trade (ambient), migration, war, and blessings.
+- **Weather system** with drifting clouds, storms, rain / snow / embers / aurora / sparks particles, and screen-shake on large disasters.
+- **Achievements** saved in localStorage.
+- **Rotating objectives** to guide new players through the mechanics.
+- **Ten+ easter eggs** — try phrases like "god mode", "thanos", "apocalypse", "long live the king".
 
 Built with [D3](https://d3js.org/) and [world-atlas](https://github.com/topojson/world-atlas) for the map, and your imagination for everything else.
 
