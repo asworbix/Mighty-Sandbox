@@ -172,6 +172,12 @@ const UI = (() => {
 
         // random rotating prompt hints
         rotateHints();
+
+        // first-load onboarding: pulse the prompt, focus it after a beat
+        const formEl = document.querySelector('.prompt');
+        if (formEl) formEl.classList.add('first-pulse');
+        setTimeout(() => el.promptInput.focus({ preventScroll: true }), 1200);
+        setTimeout(() => formEl?.classList.remove('first-pulse'), 6000);
     }
 
     /* ---------- Stats ---------- */

@@ -630,6 +630,17 @@ body {
                 0 0 0 3px rgba(0, 231, 255, 0.1),
                 0 0 40px rgba(0, 231, 255, 0.25);
 }
+.prompt.first-pulse {
+    animation: firstPulse 2.4s ease-out 2;
+}
+@keyframes firstPulse {
+    0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.6),
+                           0 0 0 1px rgba(0, 231, 255, 0.05),
+                           0 0 30px rgba(0, 231, 255, 0.08); }
+    50%      { box-shadow: 0 20px 60px rgba(0,0,0,0.6),
+                           0 0 0 4px rgba(0, 231, 255, 0.2),
+                           0 0 60px rgba(0, 231, 255, 0.35); }
+}
 .prompt-glyph {
     font-family: var(--mono);
     font-size: 18px;
