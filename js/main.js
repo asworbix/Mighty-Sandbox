@@ -115,11 +115,12 @@ const Main = (() => {
         // atmosphere always ticks (visual continuity even when paused)
         Weather.tick(dt);
         Ticker.tick(dt);
-        // sim ticks only when time is flowing
-        const simDt = world.speed > 0 ? dt : 0;
+        // sim ticks only when time is flowing. Scale by a *capped* speed
+        // so events still feel like they last a real moment at 168×.
+        const simDt = world.speed > 0 ? dt * Math.min(8, Math.sqrt(world.speed)) : 0;
         Events.tick(world, simDt);
         Arcs.tick(simDt);
-        Population.tick(world, simDt * Math.max(1, world.speed / 4));
+        Population.tick(world, simDt);
 
         // maybe trigger historical events as time passes
         if (simDt > 0) maybeFireHistoricalEvents(simDt);
