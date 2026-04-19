@@ -73,7 +73,7 @@ const MapView = (() => {
         window.addEventListener('mouseup',   () => drag = null);
         window.addEventListener('mousemove', e => { if (drag) moveDrag(e.clientX, e.clientY); });
 
-        // touch: single finger drag, two finger pinch
+        // touch: single finger drag, two finger pinch-to-zoom-toward-fingers
         canvas.addEventListener('touchstart', e => {
             if (e.touches.length === 1) {
                 const t = e.touches[0];
@@ -85,9 +85,10 @@ const MapView = (() => {
                 pinch = {
                     d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
                     s: scale,
-                    cx: (a.clientX + b.clientX) / 2,
+                    cx: (a.clientX + b.clientX) / 2,  // starting midpoint
                     cy: (a.clientY + b.clientY) / 2,
                     tx: translate[0], ty: translate[1],
+                    r0: rotate[0], r1: rotate[1],
                 };
                 autoRotate = false;
             }
@@ -103,12 +104,28 @@ const MapView = (() => {
                 const a = e.touches[0], b = e.touches[1];
                 const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
                 const k = Math.max(0.2, Math.min(6, d / pinch.d));
-                scale = Math.max(160, Math.min(3200, pinch.s * k));
-                // keep the pinch midpoint roughly pinned
+                const newScale = Math.max(160, Math.min(3200, pinch.s * k));
+                const actualK = newScale / pinch.s;
                 const mx = (a.clientX + b.clientX) / 2;
                 const my = (a.clientY + b.clientY) / 2;
-                translate[0] = pinch.tx + (mx - pinch.cx);
-                translate[1] = pinch.ty + (my - pinch.cy);
+
+                if (mode !== 'globe') {
+                    // Flat map: pinch-to-point. Keep the geo coord that was
+                    // under the initial midpoint under the current midpoint.
+                    const T0x = pinch.tx + width / 2;
+                    const T0y = pinch.ty + height / 2;
+                    const T1x = mx - actualK * (pinch.cx - T0x);
+                    const T1y = my - actualK * (pinch.cy - T0y);
+                    translate[0] = T1x - width / 2;
+                    translate[1] = T1y - height / 2;
+                } else {
+                    // Globe: scale, and rotate the globe by the midpoint shift
+                    // so whatever was under the fingers roughly stays there.
+                    const deg = 0.4;
+                    rotate[0] = pinch.r0 + (mx - pinch.cx) * deg;
+                    rotate[1] = Math.max(-89, Math.min(89, pinch.r1 - (my - pinch.cy) * deg));
+                }
+                scale = newScale;
                 updateProjection();
             }
         }, { passive: false });
@@ -207,8 +224,19 @@ const MapView = (() => {
     function onWheel(e) {
         e.preventDefault();
         const prev = scale;
-        scale *= e.deltaY < 0 ? 1.12 : 0.9;
-        scale = Math.max(160, Math.min(2400, scale));
+        const factor = e.deltaY < 0 ? 1.12 : 0.9;
+        const newScale = Math.max(160, Math.min(3200, prev * factor));
+        const actualK = newScale / prev;
+        // zoom toward the cursor (flat mode only; globe just scales from center)
+        if (mode !== 'globe' && actualK !== 1) {
+            const T0x = translate[0] + width / 2;
+            const T0y = translate[1] + height / 2;
+            const T1x = e.clientX - actualK * (e.clientX - T0x);
+            const T1y = e.clientY - actualK * (e.clientY - T0y);
+            translate[0] = T1x - width / 2;
+            translate[1] = T1y - height / 2;
+        }
+        scale = newScale;
         updateProjection();
     }
 
