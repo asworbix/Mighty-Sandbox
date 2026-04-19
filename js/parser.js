@@ -15,7 +15,6 @@ const EVENT_LIB = {
     tornado:     { kind:'tornado',     severity:0.6, mood:'bad',  duration:10, label:'Tornado',       emoji:'🌪', keywords:['tornado','twister'] },
     wildfire:    { kind:'wildfire',    severity:0.6, mood:'bad',  duration:40, label:'Wildfire',      emoji:'🔥', keywords:['wildfire','forest fire','bushfire','firestorm'] },
     blizzard:    { kind:'blizzard',    severity:0.5, mood:'bad',  duration:30, label:'Blizzard',      emoji:'❄', keywords:['blizzard','snowstorm','whiteout'] },
-    storm:       { kind:'storm',       severity:0.4, mood:'warn', duration:15, label:'Storm',         emoji:'⛈', keywords:['storm','thunderstorm','lightning'] },
     meteor:      { kind:'meteor',      severity:0.9, mood:'bad',  duration:5,  label:'Meteor strike', emoji:'☄', shake:true,  keywords:['meteor','asteroid','meteorite','comet strike','nuclear','nuke','atomic'] },
 
     // --- Blessings / positives ---
@@ -37,14 +36,8 @@ const EVENT_LIB = {
     // --- Health ---
     plague:      { kind:'plague',      severity:0.8, mood:'bad',  duration:60, label:'Plague',          emoji:'☠', keywords:['plague','pandemic','epidemic','pestilence','outbreak','disease'] },
 
-    // --- Weather ---
-    rain:        { kind:'rain',        severity:0.3, mood:'info', duration:20, label:'Rain',            emoji:'🌧', keywords:['rain','rainfall','drizzle','showers'] },
-    snow:        { kind:'snow',        severity:0.3, mood:'info', duration:25, label:'Snow',            emoji:'🌨', keywords:['snow','snowfall','snowy'] },
-    sunshine:    { kind:'sunshine',    severity:0.3, mood:'good', duration:30, label:'Sunshine',        emoji:'☀', keywords:['sunshine','sunny','clear skies','warm'] },
-    rainbow:     { kind:'rainbow',     severity:0.3, mood:'good', duration:12, label:'Rainbow',         emoji:'🌈', keywords:['rainbow'] },
-    fog:         { kind:'fog',         severity:0.2, mood:'info', duration:20, label:'Fog',             emoji:'🌫', keywords:['fog','mist','haze'] },
-
-    // --- Wonder / surreal ---
+    // --- Weather ---   (minimal — just the atmospheric extremes, no everyday rain/fog)
+    storm:       { kind:'storm',       severity:0.4, mood:'warn', duration:15, label:'Storm',           emoji:'⛈', keywords:['storm','thunderstorm','lightning','rain','rainfall','downpour','monsoon','blizzard','snowstorm'] },
     aurora:      { kind:'aurora',      severity:0.5, mood:'good', duration:30, label:'Aurora',          emoji:'🌌', keywords:['aurora','northern lights','southern lights'] },
     eclipse:     { kind:'eclipse',     severity:0.6, mood:'info', duration:10, label:'Eclipse',         emoji:'🌑', keywords:['eclipse','solar eclipse','lunar eclipse'] },
     ufo:         { kind:'ufo',         severity:0.8, mood:'info', duration:15, label:'UFO sighting',    emoji:'🛸', keywords:['ufo','alien','aliens','extraterrestrial','flying saucer','first contact','alien contact','alien invasion'] },

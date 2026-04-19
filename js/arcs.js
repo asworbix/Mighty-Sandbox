@@ -126,12 +126,10 @@ const Arcs = (() => {
         const bulge = Math.min(120, len * 0.22);
         const nx = -dy / (len || 1), ny = dx / (len || 1);
         const cx = mx + nx * bulge, cy = my - Math.abs(ny) * bulge - bulge*0.25;
-        // trail
+        // trail (no shadowBlur — expensive in canvas on mobile)
         ctx.strokeStyle = st.color;
         ctx.lineWidth = 1.2;
         ctx.globalAlpha = Math.min(1, Math.sin(Math.min(1, t) * Math.PI) * 1.2);
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = st.glow;
         ctx.beginPath();
         ctx.moveTo(pa[0], pa[1]);
         ctx.quadraticCurveTo(cx, cy, pb[0], pb[1]);
@@ -146,7 +144,6 @@ const Arcs = (() => {
         ctx.arc(bx, by, 2.4, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
     }
 
     function clear() { arcs = []; }

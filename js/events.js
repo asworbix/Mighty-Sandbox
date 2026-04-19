@@ -204,11 +204,8 @@ const Events = (() => {
                     ev.mood === 'bad'  ? 'rgba(255, 90, 120, 0.9)' :
                     ev.mood === 'warn' ? 'rgba(255, 210, 100, 0.9)' :
                     'rgba(140, 200, 255, 0.9)';
-                ctx.shadowBlur = 14;
-                ctx.shadowColor = color;
                 ctx.fillStyle = color;
                 ctx.fillText(ev.emoji, x, y - 14);
-                ctx.shadowBlur = 0;
                 ctx.fillStyle = 'rgba(255,255,255,0.85)';
                 ctx.fillText(ev.label, x, y + 2);
             }

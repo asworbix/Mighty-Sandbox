@@ -5,8 +5,9 @@
    ========================================================= */
 
 const Weather = (() => {
-    const MAX_CLOUDS = 36;
-    const MAX_PARTICLES = 700;
+    const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const MAX_CLOUDS    = IS_MOBILE ? 18 : 36;
+    const MAX_PARTICLES = IS_MOBILE ? 300 : 700;
     const clouds = [];
     const particles = [];
     let particleEmitters = []; // {lat, lon, type, life, rate}
@@ -34,21 +35,13 @@ const Weather = (() => {
     }
 
     function init() {
-        for (let i = 0; i < MAX_CLOUDS * 0.7; i++) spawnCloud();
+        // Clouds removed — only the sun/day-night math and disaster particle
+        // system remain. This is kept as a no-op for API compatibility.
     }
 
     function tickClouds(dt) {
-        for (let i = clouds.length - 1; i >= 0; i--) {
-            const c = clouds[i];
-            c.lon += c.drift * dt;
-            if (c.lon > 180) c.lon -= 360;
-            c.age += dt;
-            if (c.age > c.life) clouds.splice(i, 1);
-        }
-        // maintain coverage
-        while (clouds.length < MAX_CLOUDS * 0.7 + Math.sin(Date.now()/60000) * 4) {
-            spawnCloud();
-        }
+        // cloud system disabled; kept for API parity.
+        clouds.length = 0;
     }
 
     function renderClouds(ctx, projection) {
@@ -167,8 +160,7 @@ const Weather = (() => {
             let a = 1;
             if (s.fade) a = Math.max(0, 1 - p.age / p.life);
             ctx.globalAlpha = a;
-            if (s.glow) ctx.shadowBlur = 8, ctx.shadowColor = s.color;
-            else ctx.shadowBlur = 0;
+            // (shadow blur is expensive; rely on color+alpha for glow)
             ctx.fillStyle = s.color;
             if (s.len > 0) {
                 ctx.strokeStyle = s.color;

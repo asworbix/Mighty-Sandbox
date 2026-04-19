@@ -227,12 +227,57 @@
             </div>
         </section>
 
-        <!-- help / about / achievements / projection -->
+        <!-- help / about / achievements / projection / news -->
         <button class="hud help-btn" id="helpBtn" title="About">?</button>
         <button class="hud achv-btn" id="achvBtn" title="Achievements">🏆</button>
         <button class="hud proj-btn" id="projBtn" title="Toggle globe / map">🌐</button>
+        <button class="hud news-btn" id="newsBtn" title="Current — live news from around the globe">📡</button>
         <button class="hud layer-btn" id="layerBtn" title="Data layer">◎</button>
         <div class="layer-label" id="layerLabel">mood</div>
+
+        <!-- CURRENT — dispatches from two worlds -->
+        <div class="modal hidden" id="newsModal">
+            <div class="modal-card news-card">
+                <div class="modal-head">
+                    <div class="modal-title">
+                        <span class="news-live-dot"></span> CURRENT
+                        <span class="news-sub">dispatches from two worlds</span>
+                    </div>
+                    <button class="panel-btn" id="newsClose">✕</button>
+                </div>
+                <div class="news-topbar">
+                    <div class="news-worlds">
+                        <button class="news-world active" data-world="gaia">
+                            <span class="nw-ic">◐</span>
+                            <span class="nw-txt">
+                                <b>Gaia</b>
+                                <em>the world you're shaping</em>
+                            </span>
+                        </button>
+                        <button class="news-world" data-world="terra">
+                            <span class="nw-ic">🜨</span>
+                            <span class="nw-txt">
+                                <b>Terra</b>
+                                <em>the real Earth, right now</em>
+                            </span>
+                        </button>
+                    </div>
+                    <input type="search" id="newsSearch" placeholder="search city, country or topic…" spellcheck="false" />
+                </div>
+                <div class="news-tabs">
+                    <button class="news-tab active" data-cat="all">All</button>
+                    <button class="news-tab" data-cat="breaking">Breaking</button>
+                    <button class="news-tab" data-cat="politics">Politics</button>
+                    <button class="news-tab" data-cat="markets">Markets</button>
+                    <button class="news-tab" data-cat="science">Science</button>
+                    <button class="news-tab" data-cat="climate">Climate</button>
+                    <button class="news-tab" data-cat="culture">Culture</button>
+                    <button class="news-tab" data-cat="sports">Sports</button>
+                    <button class="news-tab" data-cat="life">Life</button>
+                </div>
+                <ul class="news-list" id="newsList"></ul>
+            </div>
+        </div>
 
         <div class="modal hidden" id="achvModal">
             <div class="modal-card">
@@ -291,6 +336,7 @@
     <script src="js/map.js"></script>
     <script src="js/arcs.js"></script>
     <script src="js/ticker.js"></script>
+    <script src="js/news.js"></script>
     <script src="js/narrator.js"></script>
     <script src="js/achievements.js"></script>
     <script src="js/quests.js"></script>

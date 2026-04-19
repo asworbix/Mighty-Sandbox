@@ -246,3 +246,31 @@ function flagEmoji(id) {
     if (!a2) return '';
     return a2.split('').map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('');
 }
+
+/* Capital city per country — used by the live "Current" news feed. */
+const CAPITALS = {
+    '004':'Kabul','008':'Tirana','012':'Algiers','024':'Luanda','032':'Buenos Aires','036':'Canberra','040':'Vienna',
+    '050':'Dhaka','051':'Yerevan','056':'Brussels','064':'Thimphu','068':'La Paz','070':'Sarajevo','072':'Gaborone',
+    '076':'Brasília','090':'Honiara','100':'Sofia','104':'Naypyidaw','108':'Gitega','112':'Minsk','116':'Phnom Penh',
+    '120':'Yaoundé','124':'Ottawa','140':'Bangui','144':'Colombo','148':"N'Djamena",'152':'Santiago','156':'Beijing',
+    '158':'Taipei','170':'Bogotá','178':'Brazzaville','180':'Kinshasa','188':'San José','191':'Zagreb','192':'Havana',
+    '196':'Nicosia','203':'Prague','208':'Copenhagen','214':'Santo Domingo','218':'Quito','222':'San Salvador',
+    '231':'Addis Ababa','232':'Asmara','233':'Tallinn','242':'Suva','246':'Helsinki','250':'Paris','262':'Djibouti',
+    '266':'Libreville','268':'Tbilisi','276':'Berlin','288':'Accra','300':'Athens','320':'Guatemala City','324':'Conakry',
+    '332':'Port-au-Prince','340':'Tegucigalpa','344':'Hong Kong','348':'Budapest','352':'Reykjavík','356':'New Delhi',
+    '360':'Jakarta','364':'Tehran','368':'Baghdad','372':'Dublin','376':'Jerusalem','380':'Rome','384':'Yamoussoukro',
+    '388':'Kingston','392':'Tokyo','398':'Astana','400':'Amman','404':'Nairobi','408':'Pyongyang','410':'Seoul',
+    '414':'Kuwait City','417':'Bishkek','418':'Vientiane','422':'Beirut','426':'Maseru','428':'Riga','430':'Monrovia',
+    '434':'Tripoli','440':'Vilnius','442':'Luxembourg','450':'Antananarivo','454':'Lilongwe','458':'Kuala Lumpur',
+    '466':'Bamako','478':'Nouakchott','484':'Mexico City','496':'Ulaanbaatar','498':'Chișinău','499':'Podgorica',
+    '504':'Rabat','508':'Maputo','512':'Muscat','516':'Windhoek','524':'Kathmandu','528':'Amsterdam','540':'Nouméa',
+    '548':'Port Vila','554':'Wellington','558':'Managua','562':'Niamey','566':'Abuja','578':'Oslo','586':'Islamabad',
+    '591':'Panama City','598':'Port Moresby','600':'Asunción','604':'Lima','608':'Manila','616':'Warsaw','620':'Lisbon',
+    '634':'Doha','642':'Bucharest','643':'Moscow','646':'Kigali','682':'Riyadh','686':'Dakar','688':'Belgrade',
+    '694':'Freetown','702':'Singapore','703':'Bratislava','704':'Hanoi','705':'Ljubljana','706':'Mogadishu','710':'Pretoria',
+    '716':'Harare','724':'Madrid','728':'Juba','729':'Khartoum','740':'Paramaribo','752':'Stockholm','756':'Bern',
+    '760':'Damascus','762':'Dushanbe','764':'Bangkok','768':'Lomé','776':'Nukuʻalofa','780':'Port of Spain','784':'Abu Dhabi',
+    '788':'Tunis','792':'Ankara','795':'Ashgabat','800':'Kampala','804':'Kyiv','807':'Skopje','818':'Cairo','826':'London',
+    '834':'Dodoma','840':'Washington','854':'Ouagadougou','858':'Montevideo','860':'Tashkent','862':'Caracas','887':"Sana'a",
+    '894':'Lusaka',
+};

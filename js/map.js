@@ -168,7 +168,8 @@ const MapView = (() => {
     }
 
     function resize() {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
         width = window.innerWidth;
         height = window.innerHeight;
         [canvas, fx].forEach(c => {
@@ -365,9 +366,6 @@ const MapView = (() => {
             ctx.lineWidth = 0.5;
             ctx.stroke();
         }
-
-        // clouds (under effects)
-        Weather.renderClouds(ctx, projection);
 
         // arcs (trade / war / migration)
         Arcs.render(ctx, projection);

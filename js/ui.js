@@ -124,6 +124,27 @@ const UI = (() => {
             if (layerLabel) layerLabel.textContent = next;
         });
 
+        // current / news modal
+        const newsBtn = $('newsBtn');
+        const newsModal = $('newsModal');
+        const newsClose = $('newsClose');
+        if (newsBtn) newsBtn.addEventListener('click', () => {
+            newsModal?.classList.remove('hidden');
+            News.render();
+        });
+        if (newsClose) newsClose.addEventListener('click', () => newsModal?.classList.add('hidden'));
+        if (newsModal) newsModal.addEventListener('click', e => {
+            if (e.target === newsModal) newsModal.classList.add('hidden');
+        });
+        document.querySelectorAll('.news-tab').forEach(b => {
+            b.addEventListener('click', () => News.setTab(b.dataset.cat));
+        });
+        document.querySelectorAll('.news-world').forEach(b => {
+            b.addEventListener('click', () => News.setWorld(b.dataset.world));
+        });
+        const newsSearch = $('newsSearch');
+        if (newsSearch) newsSearch.addEventListener('input', () => News.render());
+
         // achievements
         el.achvBtn.addEventListener('click', () => openAchievements());
         el.achvClose.addEventListener('click', () => el.achvModal.classList.add('hidden'));

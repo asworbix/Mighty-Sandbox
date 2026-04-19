@@ -5,8 +5,9 @@
    ========================================================= */
 
 const Population = (() => {
-    const TARGET_COUNT = 4200;            // total dots on the map
-    const POP_SCALE_POWER = 0.55;         // sqrt-ish distribution
+    const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const TARGET_COUNT = IS_MOBILE ? 1800 : 4200;   // total dots on the map
+    const POP_SCALE_POWER = 0.55;
 
     let people = [];        // {lat, lon, cid, country, mood, activity, age, phase}
     let cityPoints = [];    // {lat, lon, cid, country, glow}
@@ -128,18 +129,27 @@ const Population = (() => {
 
     /* --- Render the dots. Each pulses subtly and takes on country mood color. */
 
+    const sunIntensityCache = {}; // cid → intensity, rebuilt each frame
+
     function render(ctx, projection, sun) {
         ctx.save();
 
+        // precompute sun intensity per country — cheap way to avoid
+        // one trig-heavy call per person per frame.
+        for (const id in COUNTRIES) {
+            const c = COUNTRIES[id];
+            sunIntensityCache[id] = Weather.sunIntensity(c.lat, c.lon, sun);
+        }
+
         // city lights on night side
         for (const city of cityPoints) {
+            const s = sunIntensityCache[city.cid] ?? Weather.sunIntensity(city.lat, city.lon, sun);
+            const night = 1 - s;
+            if (night < 0.1) continue;
             const p = projection([city.lon, city.lat]);
             if (!p) continue;
             const [x, y] = p;
-            const s = Weather.sunIntensity(city.lat, city.lon, sun);
-            const night = 1 - s;
-            if (night < 0.1) continue;
-            const r = city.size * (1 + night*0.4);
+            const r = city.size * (1 + night * 0.4);
             ctx.globalAlpha = 0.55 * night * city.glow;
             const g = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
             g.addColorStop(0, 'rgba(255, 220, 140, 1)');
@@ -149,31 +159,44 @@ const Population = (() => {
             ctx.beginPath();
             ctx.arc(x, y, r * 5, 0, Math.PI * 2);
             ctx.fill();
-            // bright core
             ctx.globalAlpha = 0.9 * night;
             ctx.fillStyle = 'rgba(255, 240, 200, 1)';
             ctx.beginPath();
-            ctx.arc(x, y, r * 0.7, 0, Math.PI*2);
+            ctx.arc(x, y, r * 0.7, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.globalAlpha = 1;
 
-        // people
+        // people — grouped by culture color so we batch fillStyle changes.
+        const byColor = {};
         for (const p of people) {
             const pt = projection([p.lon, p.lat]);
             if (!pt) continue;
-            const [x, y] = pt;
-            const s = Weather.sunIntensity(p.lat, p.lon, sun);
-            const base = p.culture ? p.culture.color : '#7aa2ff';
-            // mood bend
-            const mood = p.mood;
-            const col = mixColor(base, mood > 0.6 ? '#9fffbf' : (mood < 0.4 ? '#ff8ea3' : '#ffffff'), Math.abs(mood - 0.5)*0.8);
-            const pulse = 0.7 + Math.sin(p.blink) * 0.3;
-            ctx.globalAlpha = 0.45 + s*0.45 + pulse*0.15;
+            const s = sunIntensityCache[p.cid] ?? 0.5;
+            const col = p.culture ? p.culture.color : '#7aa2ff';
+            (byColor[col] = byColor[col] || []).push([pt[0], pt[1], s, p.blink]);
+        }
+        for (const col in byColor) {
             ctx.fillStyle = col;
-            ctx.beginPath();
-            ctx.arc(x, y, 1.1 * pulse + 0.2, 0, Math.PI*2);
-            ctx.fill();
+            const list = byColor[col];
+            // one alpha bucket is plenty — group by floor(alpha*10)
+            const buckets = {};
+            for (const [x, y, s, blink] of list) {
+                const pulse = 0.7 + Math.sin(blink) * 0.3;
+                const a = 0.45 + s * 0.45 + pulse * 0.15;
+                const b = Math.min(9, Math.max(1, Math.floor(a * 10)));
+                (buckets[b] = buckets[b] || []).push([x, y, pulse]);
+            }
+            for (const b in buckets) {
+                ctx.globalAlpha = Number(b) / 10;
+                ctx.beginPath();
+                for (const [x, y, pulse] of buckets[b]) {
+                    const r = 1.1 * pulse + 0.2;
+                    ctx.moveTo(x + r, y);
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            }
         }
         ctx.globalAlpha = 1;
         ctx.restore();

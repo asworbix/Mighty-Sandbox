@@ -70,6 +70,7 @@ const Main = (() => {
         bootEl('assembling the HUD…', 90);
         UI.init(world);
         Ticker.init(world);
+        News.init(world);
 
         // dismiss boot
         bootEl('ready.', 100);
@@ -120,6 +121,7 @@ const Main = (() => {
         const simDt = world.speed > 0 ? dt * Math.min(8, Math.sqrt(world.speed)) : 0;
         Events.tick(world, simDt);
         Arcs.tick(simDt);
+        News.tick(simDt);
         Population.tick(world, simDt);
 
         // maybe trigger historical events as time passes
@@ -145,12 +147,8 @@ const Main = (() => {
             }
         }
 
-        // ambient: occasional small weather events and trade arcs
+        // ambient: occasional trade arcs + rare shooting star
         ambientTimer += dt;
-        if (ambientTimer > 9000 && world.speed > 0) {
-            ambientTimer = 0;
-            if (Math.random() < 0.5) spawnAmbientWeather();
-        }
         if (world.speed > 0 && Math.random() < 0.02 * (dt/16)) {
             Arcs.spawnAmbientTrade();
         }
@@ -181,21 +179,6 @@ const Main = (() => {
         }
     }
 
-    /* Spawn a subtle weather event somewhere populated, for atmosphere. */
-    function spawnAmbientWeather() {
-        const ids = ['156','840','356','250','276','076','392','643','036','710','566','358','360'];
-        const id = ids[Math.floor(Math.random()*ids.length)];
-        const c = COUNTRIES[id]; if (!c) return;
-        const kinds = ['rain','sunshine','fog','snow','storm'];
-        const kind = kinds[Math.floor(Math.random()*kinds.length)];
-        const lib = EVENT_LIB[kind];
-        const ev = {
-            kind, severity: 0.3, duration: 10 + Math.random()*15,
-            mood: lib.mood, label: lib.label, emoji: lib.emoji,
-            targets: [id], locationLabel: 'in ' + c.name,
-        };
-        Events.add(ev, world);
-    }
 
     /* Given current date, fire near-date historical events if not yet triggered.
        This only happens during time travel scrubbing, or if speed is high. */

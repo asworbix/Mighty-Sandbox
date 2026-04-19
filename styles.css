@@ -897,6 +897,236 @@ body {
 
 @media (max-width: 860px) { .ticker { display: none; } }
 
+/* ============ Current / News modal ============ */
+
+.news-btn {
+    bottom: 234px;
+    right: 18px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    position: fixed;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text-dim);
+    cursor: pointer;
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    font-size: 15px;
+    transition: 0.2s;
+    z-index: 10;
+}
+.news-btn:hover { color: var(--red); border-color: rgba(255,90,110,0.4); }
+.news-btn::after {
+    content: '';
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.news-card {
+    width: min(820px, calc(100vw - 32px));
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+.news-card .modal-head {
+    padding: 14px 18px;
+}
+.news-card .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: var(--red);
+}
+.news-live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 10px var(--red);
+    animation: pulse 1.8s ease-in-out infinite;
+}
+.news-sub {
+    color: var(--text-mute);
+    font-weight: normal;
+    letter-spacing: 0.1em;
+    margin-left: 8px;
+    font-size: 10px;
+    text-transform: none;
+}
+
+.news-topbar {
+    padding: 0 18px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.news-worlds {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.news-world {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: 0.2s;
+    text-align: left;
+}
+.news-world .nw-ic {
+    font-size: 20px;
+    color: var(--text-dim);
+    transition: 0.2s;
+}
+.news-world .nw-txt { display: flex; flex-direction: column; line-height: 1.2; }
+.news-world b {
+    font-family: var(--mono);
+    letter-spacing: 0.16em;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--text);
+}
+.news-world em {
+    font-style: normal;
+    font-size: 11px;
+    color: var(--text-mute);
+    margin-top: 2px;
+}
+.news-world:hover {
+    border-color: rgba(0,231,255,0.25);
+    background: rgba(0,231,255,0.03);
+}
+.news-world.active {
+    background: rgba(0,231,255,0.1);
+    border-color: rgba(0,231,255,0.4);
+    color: var(--text);
+}
+.news-world.active .nw-ic { color: var(--accent); text-shadow: 0 0 12px var(--accent); }
+.news-world[data-world="terra"].active { background: rgba(122,162,255,0.1); border-color: rgba(122,162,255,0.4); }
+.news-world[data-world="terra"].active .nw-ic { color: var(--accent-2); text-shadow: 0 0 12px var(--accent-2); }
+
+#newsSearch {
+    width: 100%;
+    padding: 9px 14px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 999px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    transition: 0.15s;
+}
+#newsSearch:focus { border-color: rgba(0,231,255,0.35); }
+#newsSearch::placeholder { color: var(--text-mute); font-style: italic; }
+
+.news-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 10px 18px;
+    overflow-x: auto;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    scrollbar-width: none;
+}
+.news-tabs::-webkit-scrollbar { display: none; }
+.news-tab {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    padding: 5px 11px;
+    border-radius: 999px;
+    cursor: pointer;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: 0.15s;
+}
+.news-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.news-tab.active {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.news-world[data-world="terra"].active ~ * .news-tab.active,
+.modal[data-world="terra"] .news-tab.active {
+    background: var(--accent-2);
+    border-color: var(--accent-2);
+}
+
+.news-list {
+    list-style: none;
+    margin: 0;
+    padding: 12px 18px 18px;
+    overflow-y: auto;
+    flex: 1;
+}
+.news-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: 0.15s;
+}
+.news-item:hover { background: rgba(255,255,255,0.02); padding-left: 6px; padding-right: 6px; }
+.news-item:last-child { border-bottom: none; }
+.news-item.breaking .news-body::before {
+    content: '● BREAKING ';
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    margin-right: 6px;
+    vertical-align: 1px;
+}
+.news-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+    font-size: 11px;
+    color: var(--text-mute);
+}
+.news-flag { font-size: 14px; }
+.news-city { color: var(--text); font-weight: 500; font-size: 12px; }
+.news-stamp { margin-left: auto; font-family: var(--mono); letter-spacing: 0.1em; }
+.news-body {
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.5;
+}
+.news-empty {
+    color: var(--text-mute);
+    font-style: italic;
+    padding: 40px 0;
+    text-align: center;
+    font-size: 13px;
+}
+
+@media (max-width: 620px) {
+    .news-btn { bottom: 188px; width: 34px; height: 34px; font-size: 14px; right: 12px; }
+    .news-card { width: calc(100vw - 16px); max-height: 92vh; }
+    .news-worlds { grid-template-columns: 1fr; }
+    .news-tabs { padding: 8px 12px; }
+    .news-list { padding: 10px 12px 12px; }
+    .news-body { font-size: 12px; }
+}
+
 /* ============ Timeline ============ */
 
 .timeline-wrap {
