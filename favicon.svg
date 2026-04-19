@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="g" cx="38%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#0e1826"/>
+      <stop offset="60%" stop-color="#05070b"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#00e7ff" stop-opacity="0"/>
+      <stop offset="80%" stop-color="#00e7ff" stop-opacity="0.0"/>
+      <stop offset="100%" stop-color="#00e7ff" stop-opacity="0.6"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#g)"/>
+  <circle cx="32" cy="32" r="30" fill="url(#glow)"/>
+  <!-- minimalist continents -->
+  <g fill="none" stroke="#7aa2ff" stroke-width="1.2" stroke-linecap="round" opacity="0.85">
+    <path d="M14 28 q4 -6 10 -5 t8 4 q4 -2 8 0 t6 6 q-2 4 -6 3 t-8 -2 q-4 2 -8 1 t-10 -7z"/>
+    <path d="M22 42 q4 -2 9 0 t10 -1 q2 4 -2 6 t-9 3 q-5 -2 -8 -8z"/>
+    <path d="M42 18 q3 -1 5 1 t1 4 q-3 2 -6 0z"/>
+  </g>
+  <circle cx="32" cy="32" r="30" fill="none" stroke="#00e7ff" stroke-width="1.2" opacity="0.7"/>
+  <!-- dot -->
+  <circle cx="44" cy="22" r="1.6" fill="#00e7ff"/>
+</svg>

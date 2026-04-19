@@ -68,6 +68,16 @@ Opening `index.html` via `file://` may fail on some browsers because the world-a
 
 In the repository settings, under **Pages**, point the source at this branch's root. A `.nojekyll` file is included so your JS module paths are served as-is.
 
+### Custom domain
+
+Once the site is live, you can point a domain at it so the URL reads `https://gaia.yourdomain.com/` instead of `asworbix.github.io/Mighty-Sandbox/`:
+
+1. Create a file named `CNAME` in the repo root with a single line — your domain (e.g. `gaia.yourdomain.com`).
+2. In your DNS provider, add a `CNAME` record: `gaia` → `asworbix.github.io` (or apex `A` records to GitHub's IPs if using the root).
+3. Back in **Settings → Pages**, set the custom domain and tick **Enforce HTTPS**.
+
+A few cheap/available TLDs that look great here: `.earth`, `.world`, `.live`, `.so`, `.studio`, `.space`, `.one`.
+
 ## Architecture
 
 Everything runs in the browser. No frameworks.
