@@ -247,6 +247,33 @@ function flagEmoji(id) {
     return a2.split('').map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('');
 }
 
+/* Inverse lookup so live news (which arrives as ISO alpha-2) can be mapped
+   back to our numeric ids. */
+const ISO_A2_TO_NUM = {};
+for (const k in ISO_NUM_TO_A2) ISO_A2_TO_NUM[ISO_NUM_TO_A2[k]] = k;
+
+/* GDELT (the live news source) tags articles with FIPS 10-4 country codes,
+   which differ from ISO 3166-1 alpha-2 in a number of cases. */
+const FIPS_TO_A2 = {
+    AF:'AF',AG:'DZ',AJ:'AZ',AL:'AL',AM:'AM',AN:'AD',AO:'AO',AR:'AR',AS:'AU',AU:'AT',
+    BA:'BH',BB:'BB',BD:'BM',BE:'BE',BG:'BD',BH:'BZ',BK:'BA',BL:'BO',BM:'MM',BN:'BJ',
+    BO:'BY',BP:'SB',BR:'BR',BU:'BG',BX:'BN',BY:'BI',CA:'CA',CB:'KH',CD:'TD',CE:'LK',
+    CF:'CG',CG:'CD',CH:'CN',CI:'CL',CM:'CM',CO:'CO',CS:'CR',CT:'CF',CU:'CU',CV:'CV',
+    CY:'CY',DA:'DK',DJ:'DJ',DO:'DM',DR:'DO',EC:'EC',EG:'EG',EI:'IE',EK:'GQ',EN:'EE',
+    ER:'ER',ES:'SV',ET:'ET',EZ:'CZ',FI:'FI',FJ:'FJ',FR:'FR',GB:'GA',GG:'GE',GH:'GH',
+    GM:'DE',GR:'GR',GT:'GT',GV:'GN',GY:'GY',HA:'HT',HO:'HN',HR:'HR',HU:'HU',IC:'IS',
+    ID:'ID',IN:'IN',IR:'IR',IS:'IL',IT:'IT',IV:'CI',JA:'JP',JM:'JM',JO:'JO',KE:'KE',
+    KG:'KG',KN:'KP',KR:'KI',KS:'KR',KU:'KW',KZ:'KZ',LA:'LA',LE:'LB',LG:'LV',LH:'LT',
+    LI:'LR',LO:'SK',LT:'LS',LU:'LU',LY:'LY',MA:'MG',MG:'MN',MI:'MW',MK:'MK',ML:'ML',
+    MO:'MA',MP:'MU',MR:'MR',MT:'MT',MU:'OM',MX:'MX',MY:'MY',MZ:'MZ',NG:'NE',NH:'VU',
+    NI:'NG',NL:'NL',NO:'NO',NP:'NP',NU:'NI',NZ:'NZ',PA:'PY',PE:'PE',PK:'PK',PL:'PL',
+    PM:'PA',PO:'PT',QA:'QA',RO:'RO',RP:'PH',RS:'RU',RW:'RW',SA:'SA',SE:'SC',SF:'ZA',
+    SG:'SN',SI:'SI',SL:'SL',SN:'SG',SO:'SO',SP:'ES',SU:'SD',SW:'SE',SY:'SY',SZ:'CH',
+    TH:'TH',TI:'TJ',TO:'TG',TP:'ST',TS:'TN',TT:'TL',TU:'TR',TV:'TV',TW:'TW',TX:'TM',
+    TZ:'TZ',UG:'UG',UK:'GB',UP:'UA',US:'US',UV:'BF',UY:'UY',UZ:'UZ',VC:'VC',VE:'VE',
+    VM:'VN',WA:'NA',WS:'WS',WZ:'SZ',YE:'YE',YM:'YE',ZA:'ZM',ZI:'ZW',
+};
+
 /* Capital city per country — used by the live "Current" news feed. */
 const CAPITALS = {
     '004':'Kabul','008':'Tirana','012':'Algiers','024':'Luanda','032':'Buenos Aires','036':'Canberra','040':'Vienna',
