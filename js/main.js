@@ -336,6 +336,7 @@ const Main = (() => {
         Quests.trigger(null, { kind:'travel', year });
 
         if (!silent) {
+            if (typeof UI !== 'undefined' && UI.rebuildTimeline) UI.rebuildTimeline();
             UI.showEraBanner(era, year);
             UI.log(`<b>${year < 0 ? Math.abs(year)+' BCE' : year}</b> — ${Narrator.eraIntro(era)}`, 'info');
             // fire immediate nearby events (within ±2 years)

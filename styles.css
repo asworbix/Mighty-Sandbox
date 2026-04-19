@@ -976,17 +976,28 @@ body {
     bottom: 4px;
     width: 1px;
     background: rgba(255,255,255,0.12);
+    animation: tlFade 0.35s ease;
+    transition: left 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .timeline-era-label {
     position: absolute;
     top: -2px;
-    font-size: 8px;
+    font-size: 9px;
     letter-spacing: 0.08em;
     color: var(--text-mute);
     transform: translateX(-50%);
     white-space: nowrap;
     text-transform: uppercase;
     pointer-events: none;
+    animation: tlFade 0.35s ease;
+    transition: left 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+@keyframes tlFade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 .timeline-marks {
     position: absolute;
@@ -1004,6 +1015,8 @@ body {
     box-shadow: 0 0 6px rgba(255,211,107,0.6);
     cursor: pointer;
     pointer-events: auto;
+    animation: tlFade 0.4s ease;
+    transition: transform 0.15s ease, background 0.15s ease;
 }
 .timeline-mark:hover { transform: translate(-50%, -50%) scale(1.8); background: var(--gold); }
 .timeline-handle {

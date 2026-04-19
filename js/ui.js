@@ -8,42 +8,7 @@ const UI = (() => {
     const el = {};
     let world = null;
 
-    /* timeline constants */
-    const TL_MIN_YEAR = -3000;
-    const TL_MAX_YEAR = 2300;
-    const TL_NOW      = 2026;       // anchor for the non-linear curve
-    const TL_FUTURE_CUT = 0.82;     // "now" sits at 82% of the timeline width
-    const TL_PAST_POW = 0.32;       // lower → past is more compressed
-    const TL_FUTURE_POW = 0.85;
-
-    /* Non-linear mapping: recent history gets more room, deep past
-       is compressed. Future is slightly compressed from "now" outward. */
-    function yearToU(y) {
-        y = Math.max(TL_MIN_YEAR, Math.min(TL_MAX_YEAR, y));
-        if (y <= TL_NOW) {
-            const yearsAgo = TL_NOW - y;
-            const range    = TL_NOW - TL_MIN_YEAR;
-            const t = range > 0 ? yearsAgo / range : 0;
-            return TL_FUTURE_CUT * (1 - Math.pow(t, TL_PAST_POW));
-        } else {
-            const yearsAhead = y - TL_NOW;
-            const range      = TL_MAX_YEAR - TL_NOW;
-            const t = range > 0 ? yearsAhead / range : 0;
-            return TL_FUTURE_CUT + (1 - TL_FUTURE_CUT) * Math.pow(t, TL_FUTURE_POW);
-        }
-    }
-    function uToYear(u) {
-        u = Math.max(0, Math.min(1, u));
-        if (u <= TL_FUTURE_CUT) {
-            const range = TL_NOW - TL_MIN_YEAR;
-            const t = Math.pow(1 - u / TL_FUTURE_CUT, 1 / TL_PAST_POW);
-            return Math.round(TL_NOW - t * range);
-        } else {
-            const range = TL_MAX_YEAR - TL_NOW;
-            const t = Math.pow((u - TL_FUTURE_CUT) / (1 - TL_FUTURE_CUT), 1 / TL_FUTURE_POW);
-            return Math.round(TL_NOW + t * range);
-        }
-    }
+    /* timeline constants defined inline in the Timeline section below */
 
     function $(id) { return document.getElementById(id); }
 
@@ -416,99 +381,196 @@ const UI = (() => {
         el.achvModal.classList.remove('hidden');
     }
 
-    /* ---------- Timeline ---------- */
+    /* ---------- Timeline ----------
+       The timeline uses a *dynamic* window: the visible span is
+       narrow when focused on recent years, wide for deep past.
+       The window recenters around the handle whenever the user
+       releases a drag or travels programmatically, which makes
+       event titles spread out and stop overlapping.
+    */
+
+    const TL_MIN_YEAR = -3000;
+    const TL_MAX_YEAR = 2300;
+    const TL_NOW      = 2026;
+    const ERA_SHORT = {
+        bronze:'Bronze', antiquity:'Antiquity', medieval:'Medieval',
+        plague:'Black Death', renaissance:'Renaissance', colonial:'Exploration',
+        industrial:'Industrial', ww1:'WWI', interwar:'Interwar', ww2:'WWII',
+        coldwar:'Cold War', digital:'Digital', modern:'Modern',
+        near:'Near Future', far:'Far Future',
+    };
+    let   tlWindow      = null;     // { start, end } — the current visible span
+    let   tlDragWindow  = null;     // frozen during active drag so the handle tracks the finger
+    let   tlDragging    = false;
+
+    /* Given a focus year, compute a visible window:
+       near "now" → narrow window (200-300 years), deep past → very wide. */
+    function windowFor(year) {
+        const dist = Math.abs(TL_NOW - year);
+        // half-span grows with distance from present, capped
+        const halfW = Math.max(60, Math.min(3400, 60 + dist * 0.75));
+        // 75% past / 25% future so the handle sits on the right
+        let W_past = halfW * 1.6;
+        let W_future = halfW * 0.4;
+        let start = year - W_past;
+        let end   = year + W_future;
+        // shift to keep within bounds without collapsing the window
+        if (start < TL_MIN_YEAR) { end += (TL_MIN_YEAR - start); start = TL_MIN_YEAR; }
+        if (end   > TL_MAX_YEAR) { start -= (end - TL_MAX_YEAR); end = TL_MAX_YEAR; }
+        start = Math.max(TL_MIN_YEAR, start);
+        end   = Math.min(TL_MAX_YEAR, end);
+        return { start, end };
+    }
+
+    function activeWindow() {
+        return tlDragging ? (tlDragWindow || tlWindow) : tlWindow;
+    }
+
+    function pctFromYear(y) {
+        const w = activeWindow();
+        if (!w) return 0;
+        return ((y - w.start) / (w.end - w.start)) * 100;
+    }
+
+    function yearFromU(u) {
+        const w = activeWindow();
+        if (!w) return TL_NOW;
+        return Math.round(w.start + u * (w.end - w.start));
+    }
 
     function initTimeline() {
-        // eras — ticks for every era, but labels thinned to avoid overlap
+        tlWindow = windowFor(world.clock.getUTCFullYear());
+        rebuildTimeline();
+
+        // drag
+        const rail = el.timelineRail;
+        let lastDragYear = null;
+
+        function toYear(clientX) {
+            const rect = rail.getBoundingClientRect();
+            const u = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            return yearFromU(u);
+        }
+        function startDrag(clientX) {
+            tlDragging = true;
+            tlDragWindow = { ...tlWindow }; // freeze for the duration
+            lastDragYear = toYear(clientX);
+            Main.travelTo(lastDragYear, true);
+            updateTimelineHandle();
+        }
+        function moveDrag(clientX) {
+            if (!tlDragging) return;
+            lastDragYear = toYear(clientX);
+            Main.travelTo(lastDragYear, true);
+            updateTimelineHandle();
+        }
+        function endDrag() {
+            if (!tlDragging) return;
+            tlDragging = false;
+            tlDragWindow = null;
+            if (lastDragYear != null) Main.travelTo(lastDragYear); // loud → rebuilds window + events
+            lastDragYear = null;
+        }
+
+        rail.addEventListener('mousedown', e => startDrag(e.clientX));
+        window.addEventListener('mousemove', e => moveDrag(e.clientX));
+        window.addEventListener('mouseup', endDrag);
+
+        rail.addEventListener('touchstart', e => startDrag(e.touches[0].clientX), { passive: true });
+        window.addEventListener('touchmove', e => {
+            if (!tlDragging) return;
+            e.preventDefault();
+            moveDrag(e.touches[0].clientX);
+        }, { passive: false });
+        window.addEventListener('touchend', endDrag);
+        window.addEventListener('touchcancel', endDrag);
+    }
+
+    /* Rebuild era ticks + event marks using the current window. Called on
+       non-silent travel, on init, and when the clock drifts out of view. */
+    function rebuildTimeline() {
+        if (!el.timelineEras || !el.timelineMarks) return;
+        tlWindow = windowFor(world.clock.getUTCFullYear());
+
         const eraWrap = el.timelineEras;
+        const marks   = el.timelineMarks;
         eraWrap.innerHTML = '';
+        marks.innerHTML = '';
+
+        // era ticks
         const eras = History.ERAS.slice().sort((a,b) => a.year - b.year);
-        const MIN_LABEL_GAP_PCT = 6;
+        const MIN_LABEL_GAP_PCT = 13;
         let lastLabelPct = -Infinity;
         for (const era of eras) {
             const pos = pctFromYear(era.year);
-            if (pos < 0 || pos > 100) continue;
+            if (pos < -1 || pos > 101) continue;
             const tick = document.createElement('div');
             tick.className = 'timeline-era-tick';
             tick.style.left = pos + '%';
             eraWrap.appendChild(tick);
-            if (pos - lastLabelPct >= MIN_LABEL_GAP_PCT) {
+            if (pos - lastLabelPct >= MIN_LABEL_GAP_PCT && pos >= 0 && pos <= 100) {
                 const label = document.createElement('div');
                 label.className = 'timeline-era-label';
                 label.style.left = pos + '%';
-                label.textContent = era.name.split(' ')[0];
+                label.textContent = ERA_SHORT[era.id] || era.name;
                 eraWrap.appendChild(label);
                 lastLabelPct = pos;
             }
         }
-        // marks for notable events
-        const marks = el.timelineMarks;
-        marks.innerHTML = '';
-        const bigOnes = History.HISTORICAL_EVENTS.filter(e => e.severity >= 0.8);
-        for (const he of bigOnes) {
+
+        // event marks — more visible events when the window is zoomed in
+        const w = tlWindow;
+        const span = w.end - w.start;
+        // show more granularity when zoomed in: severity threshold lowers as span shrinks
+        const sevThreshold = span <= 400 ? 0.55 : span <= 1500 ? 0.7 : 0.8;
+        const mods = History.HISTORICAL_EVENTS
+            .filter(e => e.year >= w.start - 1 && e.year <= w.end + 1 && e.severity >= sevThreshold);
+        // thin overlapping marks: keep a minimum pixel gap
+        const markPositions = [];
+        for (const he of mods) {
             const pos = pctFromYear(he.year);
             if (pos < 0 || pos > 100) continue;
+            // skip if too close to an existing (prefer higher severity)
+            const tooClose = markPositions.find(p => Math.abs(p.pos - pos) < 0.9);
+            if (tooClose) {
+                if (he.severity > tooClose.sev) {
+                    tooClose.pos = pos;
+                    tooClose.sev = he.severity;
+                    tooClose.el.style.left = pos + '%';
+                    tooClose.el.title = markTitle(he);
+                    tooClose.el.onclick = (e) => { e.stopPropagation(); Main.travelTo(he.year); };
+                }
+                continue;
+            }
             const m = document.createElement('div');
             m.className = 'timeline-mark';
             m.style.left = pos + '%';
-            m.title = `${he.year} — ${he.label}`;
+            m.title = markTitle(he);
             m.addEventListener('click', (e) => {
                 e.stopPropagation();
                 Main.travelTo(he.year);
             });
             marks.appendChild(m);
+            markPositions.push({ pos, sev: he.severity, el: m });
         }
-        // drag
-        let dragging = false;
-        const rail = el.timelineRail;
-        function toYear(e) {
-            const rect = rail.getBoundingClientRect();
-            const u = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-            return uToYear(u);
-        }
-        let lastDragYear = null;
-        rail.addEventListener('mousedown', (e) => {
-            dragging = true;
-            lastDragYear = toYear(e);
-            Main.travelTo(lastDragYear, true);
-        });
-        window.addEventListener('mousemove', (e) => {
-            if (!dragging) return;
-            lastDragYear = toYear(e);
-            Main.travelTo(lastDragYear, true);
-        });
-        window.addEventListener('mouseup', () => {
-            if (dragging && lastDragYear != null) {
-                Main.travelTo(lastDragYear);  // loud: show banner + events
-            }
-            dragging = false;
-            lastDragYear = null;
-        });
-        // touch
-        rail.addEventListener('touchstart', (e) => {
-            dragging = true;
-            lastDragYear = toYear(e.touches[0]);
-            Main.travelTo(lastDragYear, true);
-        }, { passive: true });
-        window.addEventListener('touchmove', (e) => {
-            if (!dragging) return;
-            e.preventDefault();
-            lastDragYear = toYear(e.touches[0]);
-            Main.travelTo(lastDragYear, true);
-        }, { passive: false });
-        window.addEventListener('touchend', () => {
-            if (dragging && lastDragYear != null) Main.travelTo(lastDragYear);
-            dragging = false;
-            lastDragYear = null;
-        });
+
+        updateTimelineHandle();
     }
 
-    function pctFromYear(y) {
-        return yearToU(y) * 100;
+    function markTitle(he) {
+        const y = he.year < 0 ? Math.abs(he.year)+' BCE' : he.year;
+        return `${y} · ${he.label}`;
     }
 
     function updateTimelineHandle() {
+        if (!el.timelineHandle || !tlWindow) return;
         const y = world.clock.getUTCFullYear();
+        // if we've drifted outside the visible window (e.g., sim ran at high speed
+        // into a new era), recenter automatically.
+        if (!tlDragging && (y < tlWindow.start || y > tlWindow.end)) {
+            rebuildTimeline();
+            return;
+        }
         el.timelineHandle.style.left = Math.max(0, Math.min(100, pctFromYear(y))) + '%';
     }
 
@@ -572,5 +634,6 @@ const UI = (() => {
         showCountryDetail,
         showEraBanner,
         boot,
+        rebuildTimeline,
     };
 })();
