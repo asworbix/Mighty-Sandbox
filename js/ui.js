@@ -122,6 +122,7 @@ const UI = (() => {
         if (layerBtn) layerBtn.addEventListener('click', () => {
             const next = MapView.cycleLayer();
             if (layerLabel) layerLabel.textContent = next;
+            MapView.invalidateFills();
         });
 
         // current / news modal

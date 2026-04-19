@@ -20,8 +20,28 @@ const MapView = (() => {
     let onClickHandler = null;
     let onHoverHandler = null;
     let mode = 'flat';         // 'flat' | 'globe'
-    let autoRotate = false;    // only for globe
+    let autoRotate = false;    // only for globe — off by default for perf
     let dataLayer = 'mood';    // 'mood' | 'happy' | 'peace' | 'econ' | 'health' | 'climate' | 'pop'
+
+    /* Cached Path2D objects rebuilt only when the projection changes — this
+       is the single biggest perf win. d3.geoPath is expensive (re-projects
+       every coordinate); calling Path2D.fill / .stroke is essentially free. */
+    const cachedPaths = {
+        sphere: null,
+        graticule: null,
+        land: null,
+        countries: [],     // [{ feature, p2d }]
+        dirty: true,
+    };
+    /* Country fill cache — recomputed only when the world state ticks
+       (~3 Hz via UI), not every frame. */
+    const countryFillCache = {};
+    /* Sun intensity per country, recomputed once at the start of every
+       render — saves 130 trig calls per loop iteration. */
+    const sunCountryCache = {};
+    /* Throttle hover hit-testing to once per animation frame. */
+    let pendingHoverEvent = null;
+    let hoverScheduled = false;
 
     async function init(world) {
         canvas = document.getElementById('earth');
@@ -34,8 +54,7 @@ const MapView = (() => {
         projection = makeProjection();
         path = d3.geoPath(projection, ctx);
 
-        // interactions
-        canvas.addEventListener('mousemove', onMouseMove);
+        // interactions (mousemove handled by throttled processHover below)
         canvas.addEventListener('mouseleave', () => { hoverId = null; if (onHoverHandler) onHoverHandler(null); });
         canvas.addEventListener('click', onClick);
         window.addEventListener('resize', () => { resize(); updateProjection(); });
@@ -143,6 +162,15 @@ const MapView = (() => {
         }, { passive: true });
         canvas.addEventListener('touchcancel', () => { drag = null; pinch = null; });
 
+        // hover throttled via rAF
+        canvas.addEventListener('mousemove', e => {
+            pendingHoverEvent = { x: e.clientX, y: e.clientY };
+            if (!hoverScheduled) {
+                hoverScheduled = true;
+                requestAnimationFrame(processHover);
+            }
+        }, { passive: true });
+
         // load world atlas (with CDN fallback)
         const CDNS = [
             'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
@@ -208,6 +236,29 @@ const MapView = (() => {
                 .rotate(rotate);
         }
         path = d3.geoPath(projection, ctx);
+        cachedPaths.dirty = true;
+    }
+
+    /* Build Path2D objects for sphere, graticule, land, and every country.
+       Called on demand the next time render() runs after the projection
+       changes. d3.geoPath() with no context returns SVG path-data strings
+       which Path2D's constructor accepts directly. */
+    function rebuildPaths() {
+        if (!countriesGeo) return;
+        const stringPath = d3.geoPath(projection);
+        const sphereD = stringPath({ type: 'Sphere' });
+        const gratD   = stringPath(graticule);
+        const landD   = stringPath(land);
+        cachedPaths.sphere    = sphereD ? new Path2D(sphereD) : null;
+        cachedPaths.graticule = gratD   ? new Path2D(gratD)   : null;
+        cachedPaths.land      = landD   ? new Path2D(landD)   : null;
+        const list = [];
+        for (const f of countriesGeo) {
+            const d = stringPath(f);
+            if (d) list.push({ feature: f, p2d: new Path2D(d) });
+        }
+        cachedPaths.countries = list;
+        cachedPaths.dirty = false;
     }
 
     function toggleMode() {
@@ -218,7 +269,8 @@ const MapView = (() => {
         if (mode === 'globe') rotate = [-10, -15, 0];
         projection = makeProjection();
         updateProjection();
-        autoRotate = mode === 'globe';
+        // auto-rotate stays off by default — user can click again to spin
+        autoRotate = false;
         return mode;
     }
 
@@ -241,17 +293,26 @@ const MapView = (() => {
         updateProjection();
     }
 
-    function onMouseMove(e) {
-        const x = e.clientX, y = e.clientY;
-        const geo = projection.invert([x, y]);
-        if (!geo) { hoverId = null; if (onHoverHandler) onHoverHandler(null); return; }
-        // find country containing [lon,lat]
+    /* Hit-test using cached Path2D objects + ctx.isPointInPath, which is
+       orders of magnitude faster than projection.invert + d3.geoContains
+       loops. Throttled to one test per animation frame. */
+    function processHover() {
+        hoverScheduled = false;
+        const e = pendingHoverEvent;
+        pendingHoverEvent = null;
+        if (!e) return;
+        if (cachedPaths.dirty) rebuildPaths();
         let found = null;
-        for (const f of countriesGeo) {
-            if (d3.geoContains(f, geo)) { found = f; break; }
+        for (const cp of cachedPaths.countries) {
+            if (ctx.isPointInPath(cp.p2d, e.x, e.y)) { found = cp.feature; break; }
         }
-        hoverId = found ? found.idStr : null;
-        if (onHoverHandler) onHoverHandler(hoverId, { x, y });
+        const newId = found ? found.idStr : null;
+        if (newId !== hoverId) {
+            hoverId = newId;
+            if (onHoverHandler) onHoverHandler(hoverId, e);
+        } else if (onHoverHandler && hoverId) {
+            onHoverHandler(hoverId, e); // still fire so tooltip follows cursor
+        }
     }
 
     function onClick(e) {
@@ -303,14 +364,21 @@ const MapView = (() => {
         const sun = Weather.subsolarPoint(world.clock);
 
         if (autoRotate) {
-            rotate[0] = (rotate[0] - 0.08) % 360;
+            rotate[0] = (rotate[0] - 0.05) % 360;
             updateProjection();
+        }
+
+        if (cachedPaths.dirty) rebuildPaths();
+
+        // refresh sun cache once per frame
+        for (const id in COUNTRIES) {
+            const c = COUNTRIES[id];
+            sunCountryCache[id] = Weather.sunIntensity(c.lat, c.lon, sun);
         }
 
         ctx.save();
         ctx.clearRect(0, 0, width, height);
 
-        // deep space + atmospheric halo
         const cx = width/2 + translate[0], cy = height/2 + translate[1];
         const haloR = scale * 1.25;
         const atm = ctx.createRadialGradient(cx, cy, haloR*0.7, cx, cy, haloR*1.3);
@@ -320,60 +388,55 @@ const MapView = (() => {
         ctx.fillStyle = atm;
         ctx.fillRect(0, 0, width, height);
 
-        // ocean sphere outline
-        ctx.beginPath();
-        path({ type: 'Sphere' });
-        const oceanGrad = ctx.createRadialGradient(cx - scale*0.3, cy - scale*0.2, scale*0.1, cx, cy, scale*1.15);
-        oceanGrad.addColorStop(0, '#0a1626');
-        oceanGrad.addColorStop(0.7, '#05090f');
-        oceanGrad.addColorStop(1, '#02040a');
-        ctx.fillStyle = oceanGrad;
-        ctx.fill();
+        // ocean sphere
+        if (cachedPaths.sphere) {
+            const oceanGrad = ctx.createRadialGradient(cx - scale*0.3, cy - scale*0.2, scale*0.1, cx, cy, scale*1.15);
+            oceanGrad.addColorStop(0, '#0a1626');
+            oceanGrad.addColorStop(0.7, '#05090f');
+            oceanGrad.addColorStop(1, '#02040a');
+            ctx.fillStyle = oceanGrad;
+            ctx.fill(cachedPaths.sphere);
+        }
 
         // graticule
-        ctx.beginPath();
-        path(graticule);
-        ctx.strokeStyle = 'rgba(80, 130, 180, 0.06)';
+        if (cachedPaths.graticule) {
+            ctx.strokeStyle = 'rgba(80, 130, 180, 0.06)';
+            ctx.lineWidth = 0.5;
+            ctx.stroke(cachedPaths.graticule);
+        }
+
+        // land
+        if (cachedPaths.land) {
+            ctx.fillStyle = '#141a25';
+            ctx.fill(cachedPaths.land);
+        }
+
+        // countries — Path2D cached, fill cached, daylight tint live (cheap)
         ctx.lineWidth = 0.5;
-        ctx.stroke();
-
-        // land mass (solid underlay)
-        ctx.beginPath();
-        path(land);
-        ctx.fillStyle = '#141a25';
-        ctx.fill();
-
-        // countries
-        for (const f of countriesGeo) {
-            const id = f.idStr;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+        for (const cp of cachedPaths.countries) {
+            const id = cp.feature.idStr;
             const cs = world.countryState[id];
-            const country = COUNTRIES[id];
-            let fill = '#1b2130';
-            if (cs) fill = tintForLayer(cs);
-
-            ctx.beginPath();
-            path(f);
-            // day/night tint: sample country centroid
-            if (country) {
-                const sInt = Weather.sunIntensity(country.lat, country.lon, sun);
-                fill = tintByDaylight(fill, sInt);
+            let fill = countryFillCache[id];
+            if (!fill) {
+                fill = cs ? tintForLayer(cs) : '#1b2130';
+                countryFillCache[id] = fill;
             }
-            if (id === hoverId) fill = brighten(fill, 0.4);
+            const sInt = sunCountryCache[id];
+            if (sInt !== undefined) fill = tintByDaylight(fill, sInt);
+            if (id === hoverId)   fill = brighten(fill, 0.4);
             if (id === clickedId) fill = brighten(fill, 0.65);
             ctx.fillStyle = fill;
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+            ctx.fill(cp.p2d);
+            ctx.stroke(cp.p2d);
         }
 
         // arcs (trade / war / migration)
         Arcs.render(ctx, projection);
 
-        // city lights + people
+        // city lights + people (uses internal sun cache)
         Population.render(ctx, projection, sun);
 
-        // event labels and particles
         ctx.restore();
 
         // fx layer
@@ -383,6 +446,11 @@ const MapView = (() => {
 
         // night-side vignette overlay
         renderDayNightShade(sun);
+    }
+
+    /* Public — call when any country state changes (UI does this every ~330ms). */
+    function invalidateFills() {
+        for (const k in countryFillCache) delete countryFillCache[k];
     }
 
     /* darken pixels that are on the night side via a radial overlay */
@@ -509,6 +577,7 @@ const MapView = (() => {
         zoomTo, resetView,
         toggleMode,
         cycleLayer,
+        invalidateFills,
         setAutoRotate(v) { autoRotate = !!v; },
         onClick: onClick2, onHover,
         setClicked,

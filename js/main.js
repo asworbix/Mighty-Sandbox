@@ -139,6 +139,7 @@ const Main = (() => {
             UI.updateStats();
             UI.updateClock();
             snapshotHistory();
+            MapView.invalidateFills();
             statsTimer = 0;
             // refresh country detail if open
             const id = MapView.clickedId;
