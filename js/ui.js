@@ -11,6 +11,39 @@ const UI = (() => {
     /* timeline constants */
     const TL_MIN_YEAR = -3000;
     const TL_MAX_YEAR = 2300;
+    const TL_NOW      = 2026;       // anchor for the non-linear curve
+    const TL_FUTURE_CUT = 0.82;     // "now" sits at 82% of the timeline width
+    const TL_PAST_POW = 0.32;       // lower → past is more compressed
+    const TL_FUTURE_POW = 0.85;
+
+    /* Non-linear mapping: recent history gets more room, deep past
+       is compressed. Future is slightly compressed from "now" outward. */
+    function yearToU(y) {
+        y = Math.max(TL_MIN_YEAR, Math.min(TL_MAX_YEAR, y));
+        if (y <= TL_NOW) {
+            const yearsAgo = TL_NOW - y;
+            const range    = TL_NOW - TL_MIN_YEAR;
+            const t = range > 0 ? yearsAgo / range : 0;
+            return TL_FUTURE_CUT * (1 - Math.pow(t, TL_PAST_POW));
+        } else {
+            const yearsAhead = y - TL_NOW;
+            const range      = TL_MAX_YEAR - TL_NOW;
+            const t = range > 0 ? yearsAhead / range : 0;
+            return TL_FUTURE_CUT + (1 - TL_FUTURE_CUT) * Math.pow(t, TL_FUTURE_POW);
+        }
+    }
+    function uToYear(u) {
+        u = Math.max(0, Math.min(1, u));
+        if (u <= TL_FUTURE_CUT) {
+            const range = TL_NOW - TL_MIN_YEAR;
+            const t = Math.pow(1 - u / TL_FUTURE_CUT, 1 / TL_PAST_POW);
+            return Math.round(TL_NOW - t * range);
+        } else {
+            const range = TL_MAX_YEAR - TL_NOW;
+            const t = Math.pow((u - TL_FUTURE_CUT) / (1 - TL_FUTURE_CUT), 1 / TL_FUTURE_POW);
+            return Math.round(TL_NOW + t * range);
+        }
+    }
 
     function $(id) { return document.getElementById(id); }
 
@@ -386,21 +419,27 @@ const UI = (() => {
     /* ---------- Timeline ---------- */
 
     function initTimeline() {
-        // eras
+        // eras — ticks for every era, but labels thinned to avoid overlap
         const eraWrap = el.timelineEras;
         eraWrap.innerHTML = '';
-        for (const era of History.ERAS) {
+        const eras = History.ERAS.slice().sort((a,b) => a.year - b.year);
+        const MIN_LABEL_GAP_PCT = 6;
+        let lastLabelPct = -Infinity;
+        for (const era of eras) {
             const pos = pctFromYear(era.year);
             if (pos < 0 || pos > 100) continue;
             const tick = document.createElement('div');
             tick.className = 'timeline-era-tick';
             tick.style.left = pos + '%';
             eraWrap.appendChild(tick);
-            const label = document.createElement('div');
-            label.className = 'timeline-era-label';
-            label.style.left = pos + '%';
-            label.textContent = era.name.split(' ')[0];
-            eraWrap.appendChild(label);
+            if (pos - lastLabelPct >= MIN_LABEL_GAP_PCT) {
+                const label = document.createElement('div');
+                label.className = 'timeline-era-label';
+                label.style.left = pos + '%';
+                label.textContent = era.name.split(' ')[0];
+                eraWrap.appendChild(label);
+                lastLabelPct = pos;
+            }
         }
         // marks for notable events
         const marks = el.timelineMarks;
@@ -425,7 +464,7 @@ const UI = (() => {
         function toYear(e) {
             const rect = rail.getBoundingClientRect();
             const u = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-            return Math.round(TL_MIN_YEAR + u * (TL_MAX_YEAR - TL_MIN_YEAR));
+            return uToYear(u);
         }
         let lastDragYear = null;
         rail.addEventListener('mousedown', (e) => {
@@ -450,12 +489,13 @@ const UI = (() => {
             dragging = true;
             lastDragYear = toYear(e.touches[0]);
             Main.travelTo(lastDragYear, true);
-        });
+        }, { passive: true });
         window.addEventListener('touchmove', (e) => {
             if (!dragging) return;
+            e.preventDefault();
             lastDragYear = toYear(e.touches[0]);
             Main.travelTo(lastDragYear, true);
-        });
+        }, { passive: false });
         window.addEventListener('touchend', () => {
             if (dragging && lastDragYear != null) Main.travelTo(lastDragYear);
             dragging = false;
@@ -464,7 +504,7 @@ const UI = (() => {
     }
 
     function pctFromYear(y) {
-        return ((y - TL_MIN_YEAR) / (TL_MAX_YEAR - TL_MIN_YEAR)) * 100;
+        return yearToU(y) * 100;
     }
 
     function updateTimelineHandle() {

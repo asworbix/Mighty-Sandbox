@@ -41,31 +41,90 @@ const MapView = (() => {
         window.addEventListener('resize', () => { resize(); updateProjection(); });
         canvas.addEventListener('wheel', onWheel, { passive: false });
 
-        // drag to pan (flat) / rotate (globe)
+        // drag to pan (flat) / rotate (globe) — mouse + touch + pinch
         let drag = null;
-        canvas.addEventListener('mousedown', e => {
+        let pinch = null;
+
+        function startDrag(x, y) {
             drag = {
-                x: e.clientX, y: e.clientY,
+                x, y,
                 tx: translate[0], ty: translate[1],
                 r0: rotate[0], r1: rotate[1],
             };
             autoRotate = false;
-        });
-        window.addEventListener('mouseup', () => drag = null);
-        window.addEventListener('mousemove', e => {
+        }
+        function moveDrag(x, y) {
             if (!drag) return;
+            const dx = x - drag.x;
+            const dy = y - drag.y;
             if (mode === 'globe') {
-                const dx = (e.clientX - drag.x);
-                const dy = (e.clientY - drag.y);
                 const k = 0.4;
                 rotate[0] = drag.r0 + dx * k;
                 rotate[1] = Math.max(-89, Math.min(89, drag.r1 - dy * k));
             } else {
-                translate[0] = drag.tx + (e.clientX - drag.x);
-                translate[1] = drag.ty + (e.clientY - drag.y);
+                translate[0] = drag.tx + dx;
+                translate[1] = drag.ty + dy;
             }
             updateProjection();
-        });
+        }
+
+        // mouse
+        canvas.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY));
+        window.addEventListener('mouseup',   () => drag = null);
+        window.addEventListener('mousemove', e => { if (drag) moveDrag(e.clientX, e.clientY); });
+
+        // touch: single finger drag, two finger pinch
+        canvas.addEventListener('touchstart', e => {
+            if (e.touches.length === 1) {
+                const t = e.touches[0];
+                startDrag(t.clientX, t.clientY);
+                pinch = null;
+            } else if (e.touches.length >= 2) {
+                drag = null;
+                const a = e.touches[0], b = e.touches[1];
+                pinch = {
+                    d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+                    s: scale,
+                    cx: (a.clientX + b.clientX) / 2,
+                    cy: (a.clientY + b.clientY) / 2,
+                    tx: translate[0], ty: translate[1],
+                };
+                autoRotate = false;
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchmove', e => {
+            if (e.touches.length === 1 && drag) {
+                e.preventDefault();
+                const t = e.touches[0];
+                moveDrag(t.clientX, t.clientY);
+            } else if (e.touches.length >= 2 && pinch) {
+                e.preventDefault();
+                const a = e.touches[0], b = e.touches[1];
+                const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+                const k = Math.max(0.2, Math.min(6, d / pinch.d));
+                scale = Math.max(160, Math.min(3200, pinch.s * k));
+                // keep the pinch midpoint roughly pinned
+                const mx = (a.clientX + b.clientX) / 2;
+                const my = (a.clientY + b.clientY) / 2;
+                translate[0] = pinch.tx + (mx - pinch.cx);
+                translate[1] = pinch.ty + (my - pinch.cy);
+                updateProjection();
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', e => {
+            if (e.touches.length === 0) {
+                drag = null;
+                pinch = null;
+            } else if (e.touches.length === 1) {
+                // transitioning from pinch → single-finger drag
+                const t = e.touches[0];
+                startDrag(t.clientX, t.clientY);
+                pinch = null;
+            }
+        }, { passive: true });
+        canvas.addEventListener('touchcancel', () => { drag = null; pinch = null; });
 
         // load world atlas (with CDN fallback)
         const CDNS = [
