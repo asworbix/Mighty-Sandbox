@@ -1042,6 +1042,44 @@ body {
 }
 .timeline-hint em { font-style: normal; color: var(--text-dim); }
 
+/* tiny pill that floats above the rail while you drag, showing zoom level */
+.timeline-zoom-chip {
+    position: absolute;
+    left: 50%;
+    top: -28px;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    background: rgba(0, 231, 255, 0.08);
+    border: 1px solid rgba(0, 231, 255, 0.25);
+    border-radius: 999px;
+    padding: 4px 10px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), font-size 0.3s;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(0, 231, 255, 0.4);
+}
+.timeline-zoom-chip.big {
+    top: -44px;
+    font-size: 13px;
+    padding: 6px 14px;
+    border-color: rgba(0, 231, 255, 0.5);
+    background: rgba(0, 231, 255, 0.12);
+    box-shadow: 0 0 20px rgba(0, 231, 255, 0.2);
+}
+
+/* while dragging, invite vertical motion */
+.timeline-wrap.dragging {
+    border-color: rgba(0,231,255,0.3);
+    box-shadow: 0 0 0 1px rgba(0,231,255,0.1), 0 0 28px rgba(0,231,255,0.15);
+}
+.timeline-wrap.dragging .timeline-rail { cursor: ns-resize; }
+.timeline-wrap.dragging .timeline-hint { opacity: 0; }
+
 /* ============ Era banner (appears on travel) ============ */
 
 .era-banner {

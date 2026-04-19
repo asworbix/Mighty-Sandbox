@@ -29,7 +29,7 @@ const UI = (() => {
             'helpBtn','helpClose','helpModal',
             'achvBtn','achvClose','achvModal','achvList',
             'eraBanner','eraYear','eraName','eraMood',
-            'timelineYear','timelineHandle','timelineRail','timelineMarks','timelineEras','timelineNow',
+            'timelineWrap','timelineYear','timelineHandle','timelineRail','timelineMarks','timelineEras','timelineNow',
             'bootStatus',
         ].forEach(id => el[id] = $(id));
 
@@ -392,6 +392,8 @@ const UI = (() => {
     const TL_MIN_YEAR = -3000;
     const TL_MAX_YEAR = 2300;
     const TL_NOW      = 2026;
+    const TL_ZOOM_DEADZONE = 14;   // px of upward motion before zoom starts
+    const TL_ZOOM_RANGE    = 150;  // px of upward motion for full zoom-out
     const ERA_SHORT = {
         bronze:'Bronze', antiquity:'Antiquity', medieval:'Medieval',
         plague:'Black Death', renaissance:'Renaissance', colonial:'Exploration',
@@ -399,22 +401,21 @@ const UI = (() => {
         coldwar:'Cold War', digital:'Digital', modern:'Modern',
         near:'Near Future', far:'Far Future',
     };
-    let   tlWindow      = null;     // { start, end } — the current visible span
-    let   tlDragWindow  = null;     // frozen during active drag so the handle tracks the finger
+    let   tlWindow      = null;
+    let   tlDragWindow  = null;
     let   tlDragging    = false;
+    let   tlDragBase    = null;     // { startX, startY, baseWindow }
+    let   tlZoomOut     = 0;        // 0..1 — live zoom amount during drag
+    // cached DOM for ticks / labels / marks (built once, laid out many times)
+    const tlItems = { eras: [], marks: [] };
 
-    /* Given a focus year, compute a visible window:
-       near "now" → narrow window (200-300 years), deep past → very wide. */
     function windowFor(year) {
         const dist = Math.abs(TL_NOW - year);
-        // half-span grows with distance from present, capped
         const halfW = Math.max(60, Math.min(3400, 60 + dist * 0.75));
-        // 75% past / 25% future so the handle sits on the right
         let W_past = halfW * 1.6;
         let W_future = halfW * 0.4;
         let start = year - W_past;
         let end   = year + W_future;
-        // shift to keep within bounds without collapsing the window
         if (start < TL_MIN_YEAR) { end += (TL_MIN_YEAR - start); start = TL_MIN_YEAR; }
         if (end   > TL_MAX_YEAR) { start -= (end - TL_MAX_YEAR); end = TL_MAX_YEAR; }
         start = Math.max(TL_MIN_YEAR, start);
@@ -440,138 +441,228 @@ const UI = (() => {
 
     function initTimeline() {
         tlWindow = windowFor(world.clock.getUTCFullYear());
-        rebuildTimeline();
+        buildTimelineElements();
+        layoutTimeline();
+        updateTimelineHandle();
 
-        // drag
         const rail = el.timelineRail;
         let lastDragYear = null;
 
-        function toYear(clientX) {
+        function yearAtClient(clientX) {
             const rect = rail.getBoundingClientRect();
             const u = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
             return yearFromU(u);
         }
-        function startDrag(clientX) {
+        function startDrag(clientX, clientY) {
             tlDragging = true;
-            tlDragWindow = { ...tlWindow }; // freeze for the duration
-            lastDragYear = toYear(clientX);
-            Main.travelTo(lastDragYear, true);
-            updateTimelineHandle();
+            tlDragBase = {
+                startX: clientX, startY: clientY,
+                baseWindow: { ...tlWindow },
+            };
+            tlDragWindow = { ...tlWindow };
+            tlZoomOut = 0;
+            el.timelineWrap?.classList.add('dragging');
+            updateDrag(clientX, clientY);
         }
-        function moveDrag(clientX) {
-            if (!tlDragging) return;
-            lastDragYear = toYear(clientX);
-            Main.travelTo(lastDragYear, true);
+        function updateDrag(clientX, clientY) {
+            if (!tlDragging || !tlDragBase) return;
+            // vertical lift → interpolate toward full-range window
+            const dy = Math.max(0, tlDragBase.startY - clientY - TL_ZOOM_DEADZONE);
+            const raw = Math.max(0, Math.min(1, dy / TL_ZOOM_RANGE));
+            const eased = raw * raw * (3 - 2 * raw);
+            tlZoomOut = eased;
+            const base = tlDragBase.baseWindow;
+            tlDragWindow = {
+                start: base.start + (TL_MIN_YEAR - base.start) * eased,
+                end:   base.end   + (TL_MAX_YEAR - base.end)   * eased,
+            };
+            // year under the finger within the current (possibly zoomed) window
+            const year = yearAtClient(clientX);
+            lastDragYear = year;
+            Main.travelTo(year, true);
+            layoutTimeline();
             updateTimelineHandle();
+            updateZoomChip();
         }
         function endDrag() {
             if (!tlDragging) return;
             tlDragging = false;
             tlDragWindow = null;
-            if (lastDragYear != null) Main.travelTo(lastDragYear); // loud → rebuilds window + events
+            tlDragBase = null;
+            tlZoomOut = 0;
+            el.timelineWrap?.classList.remove('dragging');
+            hideZoomChip();
+            if (lastDragYear != null) Main.travelTo(lastDragYear); // loud → rebuilds + animates
             lastDragYear = null;
         }
 
-        rail.addEventListener('mousedown', e => startDrag(e.clientX));
-        window.addEventListener('mousemove', e => moveDrag(e.clientX));
+        // mouse
+        rail.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY));
+        window.addEventListener('mousemove', e => { if (tlDragging) updateDrag(e.clientX, e.clientY); });
         window.addEventListener('mouseup', endDrag);
 
-        rail.addEventListener('touchstart', e => startDrag(e.touches[0].clientX), { passive: true });
+        // touch
+        rail.addEventListener('touchstart', e => {
+            const t = e.touches[0];
+            startDrag(t.clientX, t.clientY);
+        }, { passive: true });
         window.addEventListener('touchmove', e => {
             if (!tlDragging) return;
             e.preventDefault();
-            moveDrag(e.touches[0].clientX);
+            const t = e.touches[0];
+            updateDrag(t.clientX, t.clientY);
         }, { passive: false });
         window.addEventListener('touchend', endDrag);
         window.addEventListener('touchcancel', endDrag);
     }
 
-    /* Rebuild era ticks + event marks using the current window. Called on
-       non-silent travel, on init, and when the clock drifts out of view. */
-    function rebuildTimeline() {
-        if (!el.timelineEras || !el.timelineMarks) return;
-        tlWindow = windowFor(world.clock.getUTCFullYear());
-
+    /* Build every era tick/label and every significant event mark once —
+       we only reposition them after that, which keeps the drag interaction
+       buttery even while the window continuously changes shape. */
+    function buildTimelineElements() {
         const eraWrap = el.timelineEras;
         const marks   = el.timelineMarks;
+        if (!eraWrap || !marks) return;
         eraWrap.innerHTML = '';
         marks.innerHTML = '';
+        tlItems.eras = [];
+        tlItems.marks = [];
 
-        // era ticks
-        const eras = History.ERAS.slice().sort((a,b) => a.year - b.year);
-        const MIN_LABEL_GAP_PCT = 13;
-        let lastLabelPct = -Infinity;
-        for (const era of eras) {
-            const pos = pctFromYear(era.year);
-            if (pos < -1 || pos > 101) continue;
+        for (const era of History.ERAS) {
             const tick = document.createElement('div');
             tick.className = 'timeline-era-tick';
-            tick.style.left = pos + '%';
             eraWrap.appendChild(tick);
-            if (pos - lastLabelPct >= MIN_LABEL_GAP_PCT && pos >= 0 && pos <= 100) {
-                const label = document.createElement('div');
-                label.className = 'timeline-era-label';
-                label.style.left = pos + '%';
-                label.textContent = ERA_SHORT[era.id] || era.name;
-                eraWrap.appendChild(label);
-                lastLabelPct = pos;
-            }
+            const label = document.createElement('div');
+            label.className = 'timeline-era-label';
+            label.textContent = ERA_SHORT[era.id] || era.name;
+            eraWrap.appendChild(label);
+            tlItems.eras.push({ tick, label, year: era.year });
         }
 
-        // event marks — more visible events when the window is zoomed in
-        const w = tlWindow;
-        const span = w.end - w.start;
-        // show more granularity when zoomed in: severity threshold lowers as span shrinks
-        const sevThreshold = span <= 400 ? 0.55 : span <= 1500 ? 0.7 : 0.8;
-        const mods = History.HISTORICAL_EVENTS
-            .filter(e => e.year >= w.start - 1 && e.year <= w.end + 1 && e.severity >= sevThreshold);
-        // thin overlapping marks: keep a minimum pixel gap
-        const markPositions = [];
-        for (const he of mods) {
-            const pos = pctFromYear(he.year);
-            if (pos < 0 || pos > 100) continue;
-            // skip if too close to an existing (prefer higher severity)
-            const tooClose = markPositions.find(p => Math.abs(p.pos - pos) < 0.9);
-            if (tooClose) {
-                if (he.severity > tooClose.sev) {
-                    tooClose.pos = pos;
-                    tooClose.sev = he.severity;
-                    tooClose.el.style.left = pos + '%';
-                    tooClose.el.title = markTitle(he);
-                    tooClose.el.onclick = (e) => { e.stopPropagation(); Main.travelTo(he.year); };
-                }
-                continue;
-            }
+        for (const he of History.HISTORICAL_EVENTS) {
+            if (he.severity < 0.55) continue;
             const m = document.createElement('div');
             m.className = 'timeline-mark';
-            m.style.left = pos + '%';
             m.title = markTitle(he);
-            m.addEventListener('click', (e) => {
+            m.addEventListener('click', e => {
                 e.stopPropagation();
                 Main.travelTo(he.year);
             });
             marks.appendChild(m);
-            markPositions.push({ pos, sev: he.severity, el: m });
+            tlItems.marks.push({ el: m, year: he.year, severity: he.severity });
+        }
+    }
+
+    /* Apply the current active window to every element. Called on init,
+       on travel, and on every drag frame. */
+    function layoutTimeline() {
+        const w = activeWindow();
+        if (!w) return;
+        const span = w.end - w.start;
+        const sevThreshold = span <= 400 ? 0.55 : span <= 1500 ? 0.7 : 0.82;
+
+        // pass 1: position era ticks and default label visibility
+        const visible = [];
+        for (const it of tlItems.eras) {
+            const pct = ((it.year - w.start) / span) * 100;
+            if (pct < -2 || pct > 102) {
+                it.tick.style.display = 'none';
+                it.label.style.display = 'none';
+            } else {
+                it.tick.style.display = '';
+                it.tick.style.left = pct + '%';
+                it.label.style.left = pct + '%';
+                it.label.style.display = ''; // may hide in pass 2
+                visible.push({ it, pct });
+            }
+        }
+        // pass 2: thin labels so none overlap
+        visible.sort((a, b) => a.pct - b.pct);
+        const MIN_LABEL_GAP_PCT = 13;
+        let lastLabelPct = -Infinity;
+        for (const { it, pct } of visible) {
+            if (pct < 0 || pct > 100 || pct - lastLabelPct < MIN_LABEL_GAP_PCT) {
+                it.label.style.display = 'none';
+            } else {
+                lastLabelPct = pct;
+            }
         }
 
+        // marks
+        const positions = [];
+        for (const m of tlItems.marks) {
+            const pct = ((m.year - w.start) / span) * 100;
+            if (pct < 0 || pct > 100 || m.severity < sevThreshold) {
+                m.el.style.display = 'none';
+                continue;
+            }
+            const clash = positions.find(p => Math.abs(p.pct - pct) < 0.9);
+            if (clash) {
+                if (m.severity > clash.sev) {
+                    // replace clash with the stronger event
+                    clash.el.style.display = 'none';
+                    clash.pct = pct; clash.sev = m.severity; clash.el = m.el;
+                    m.el.style.display = ''; m.el.style.left = pct + '%';
+                } else {
+                    m.el.style.display = 'none';
+                }
+                continue;
+            }
+            m.el.style.display = '';
+            m.el.style.left = pct + '%';
+            positions.push({ pct, sev: m.severity, el: m.el });
+        }
+    }
+
+    /* Re-anchor the window around the current year (called on non-silent travel). */
+    function rebuildTimeline() {
+        if (!el.timelineEras || !el.timelineMarks) return;
+        if (!tlItems.eras.length) buildTimelineElements();
+        tlWindow = windowFor(world.clock.getUTCFullYear());
+        layoutTimeline();
         updateTimelineHandle();
     }
 
     function markTitle(he) {
-        const y = he.year < 0 ? Math.abs(he.year)+' BCE' : he.year;
+        const y = he.year < 0 ? Math.abs(he.year) + ' BCE' : he.year;
         return `${y} · ${he.label}`;
     }
 
     function updateTimelineHandle() {
-        if (!el.timelineHandle || !tlWindow) return;
+        if (!el.timelineHandle) return;
         const y = world.clock.getUTCFullYear();
-        // if we've drifted outside the visible window (e.g., sim ran at high speed
-        // into a new era), recenter automatically.
-        if (!tlDragging && (y < tlWindow.start || y > tlWindow.end)) {
+        const w = activeWindow();
+        if (!w) return;
+        if (!tlDragging && (y < w.start || y > w.end)) {
             rebuildTimeline();
             return;
         }
         el.timelineHandle.style.left = Math.max(0, Math.min(100, pctFromYear(y))) + '%';
+    }
+
+    /* Small zoom-state chip above the rail while dragging. */
+    function updateZoomChip() {
+        let chip = el.timelineZoomChip;
+        if (!chip) {
+            chip = document.createElement('div');
+            chip.className = 'timeline-zoom-chip';
+            el.timelineWrap?.appendChild(chip);
+            el.timelineZoomChip = chip;
+        }
+        const w = activeWindow();
+        if (!w) return;
+        const span = w.end - w.start;
+        let label;
+        if (span > 4000)      label = 'all of history';
+        else if (span > 1500) label = 'era view';
+        else if (span > 400)  label = 'zoomed in';
+        else                  label = 'focused';
+        chip.textContent = (tlZoomOut > 0.02 ? '↕ ' : '') + label;
+        chip.classList.toggle('big', tlZoomOut > 0.3);
+        chip.style.opacity = '1';
+    }
+    function hideZoomChip() {
+        if (el.timelineZoomChip) el.timelineZoomChip.style.opacity = '0';
     }
 
     /* ---------- Era banner ---------- */
