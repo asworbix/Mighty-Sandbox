@@ -1220,22 +1220,137 @@ body {
 
 /* ============ Small screens ============ */
 
-@media (max-width: 860px) {
-    .stats { width: 200px; top: 80px; }
+/* ============ Mobile stats pill (collapsed stats panel) ============ */
+
+.stats-pill {
+    display: none;
+    position: fixed;
+    top: 14px;
+    right: 12px;
+    z-index: 12;
+    background: rgba(10, 14, 20, 0.82);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 999px;
+    padding: 6px 12px;
+    gap: 10px;
+    align-items: center;
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    cursor: pointer;
+}
+.stats-pill .sp-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2.2s ease-in-out infinite;
+}
+.stats-pill .sp-chev {
+    color: var(--text-mute);
+    font-size: 9px;
+    margin-left: 2px;
+}
+
+/* ============ Tablet / small laptop ============ */
+
+@media (max-width: 900px) {
     .log { display: none; }
     .quests { display: none; }
-    .country-detail { width: 220px; bottom: 280px; }
-    .hud.top { flex-wrap: wrap; gap: 8px; }
-    .time-controls { margin-left: 0; }
-    .prompt-chips { display: none; }
+    .ticker { display: none; }
     .brand-tag { display: none; }
-    .timeline-wrap { left: 12px; right: 12px; width: auto; bottom: 132px; }
+    .prompt-chips { display: none; }
+
+    .hud.top { top: 12px; left: 12px; right: 12px; gap: 8px; }
+    .clock { min-width: 0; padding: 8px 12px; }
+    .clock-time { font-size: 14px; }
+    .time-controls { margin-left: auto; padding: 6px; }
+    .tc { min-width: 30px; padding: 5px 8px; }
+
+    .stats { width: 220px; top: 80px; right: 12px; padding: 12px; }
+    .country-detail { width: 260px; bottom: 240px; left: 12px; }
+    .timeline-wrap { left: 12px; right: 12px; width: auto; bottom: 124px; padding: 8px 12px 10px; }
     .era-year { font-size: 46px; }
 }
 
-@media (max-width: 560px) {
-    .stats { top: 72px; right: 12px; width: 170px; font-size: 11px; padding: 10px; }
-    .country-detail { left: 12px; width: calc(100vw - 24px); bottom: 280px; }
-    .era-year { font-size: 36px; }
-    .era-mood { font-size: 12px; }
+/* ============ Phone ============ */
+
+@media (max-width: 620px) {
+    /* Top HUD: just brand + clock + simplified speeds */
+    .hud.top { flex-wrap: nowrap; }
+    .brand { padding: 7px 10px; gap: 6px; }
+    .brand-name { font-size: 11px; letter-spacing: 0.18em; }
+    .clock { flex: 1; padding: 7px 10px; }
+    .clock-date { font-size: 9px; }
+    .clock-time { font-size: 12px; letter-spacing: 0.06em; }
+    .time-controls { padding: 4px; gap: 3px; }
+    .tc { font-size: 10px; padding: 4px 6px; min-width: 26px; }
+    .tc[data-speed="4"], .tc[data-speed="168"] { display: none; }
+
+    /* Collapse the stats panel to a pill. Panel appears only on tap. */
+    .stats { display: none; top: 62px; right: 12px; left: 12px; width: auto; padding: 12px; font-size: 12px; }
+    .stats.expanded { display: block; }
+    .stats-pill { display: inline-flex; }
+    .stats-pill.hidden { display: none; }
+
+    /* Right-side buttons: smaller and closer */
+    .help-btn, .achv-btn, .proj-btn, .layer-btn {
+        width: 34px; height: 34px; font-size: 14px; right: 12px;
+    }
+    .help-btn  { bottom: 20px; }
+    .achv-btn  { bottom: 62px; }
+    .proj-btn  { bottom: 104px; }
+    .layer-btn { bottom: 146px; }
+    .layer-label { display: none; }
+
+    /* Timeline: simpler */
+    .timeline-wrap {
+        left: 12px; right: 12px; width: auto; bottom: 78px;
+        padding: 6px 12px 8px; border-radius: 12px;
+    }
+    .timeline-head { margin-bottom: 4px; gap: 8px; }
+    .timeline-label { display: none; }
+    .timeline-year { font-size: 13px; }
+    .timeline-now { font-size: 9px; padding: 3px 8px; }
+    .timeline-hint { display: none; }
+    .timeline-era-label { display: none; }
+    .timeline-rail { height: 22px; }
+
+    /* Country detail: bottom sheet style */
+    .country-detail {
+        left: 12px; right: 12px; width: auto;
+        bottom: 140px; padding: 12px 14px;
+        max-height: 46vh; overflow-y: auto;
+    }
+    .cd-activity-body, .cd-row { font-size: 12px; }
+    .cd-spark-svg { height: 36px; }
+
+    /* Prompt: slightly smaller */
+    .prompt-wrap { bottom: 14px; width: calc(100vw - 24px); }
+    .prompt-hint { display: none; }
+    .prompt { padding: 4px 4px 4px 12px; }
+    .prompt-glyph { font-size: 16px; }
+    #promptInput { font-size: 14px; padding: 8px 2px; }
+    .prompt-send { width: 34px; height: 34px; }
+
+    /* Era banner: fit on small screens */
+    .era-year { font-size: 38px; letter-spacing: 0.12em; }
+    .era-name { font-size: 11px; letter-spacing: 0.28em; }
+    .era-mood { font-size: 12px; padding: 0 20px; line-height: 1.4; }
+
+    /* Help modal: fit phone */
+    .modal-card { width: calc(100vw - 24px); max-height: 86vh; }
+    .modal-body { padding: 16px; font-size: 13px; }
+
+    /* Achievement toast: narrower */
+    .achv-toast { right: 12px; bottom: 100px; min-width: 0; width: calc(100vw - 24px); }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+    .tc[data-speed="24"] { display: none; }
+    .brand-name { font-size: 10px; }
+    .clock-time { font-size: 11px; }
 }

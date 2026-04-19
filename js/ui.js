@@ -20,6 +20,7 @@ const UI = (() => {
         // cache elements
         [
             'clock','clockDate','clockTime',
+            'statsPanel','statsPill','pillPop','pillHappy',
             'statPop','statPopBar','statHappy','statHappyBar',
             'statEcon','statEconBar','statPeace','statPeaceBar',
             'statHealth','statHealthBar','statClimate','statClimateBar',
@@ -33,6 +34,30 @@ const UI = (() => {
             'timelineYear','timelineHandle','timelineRail','timelineMarks','timelineEras','timelineNow',
             'bootStatus',
         ].forEach(id => el[id] = $(id));
+
+        // mobile stats pill ⇄ expanded stats panel
+        if (el.statsPill) {
+            el.statsPill.addEventListener('click', () => {
+                el.statsPanel.classList.add('expanded');
+                el.statsPill.classList.add('hidden');
+            });
+        }
+        if (el.statsPanel) {
+            el.statsPanel.addEventListener('click', (e) => {
+                // tap the panel header or outside its interactive content to collapse (mobile only)
+                if (window.matchMedia('(max-width: 620px)').matches) {
+                    el.statsPanel.classList.remove('expanded');
+                    el.statsPill.classList.remove('hidden');
+                }
+            });
+        }
+        // auto-collapse when rotating to desktop size
+        window.addEventListener('resize', () => {
+            if (!window.matchMedia('(max-width: 620px)').matches) {
+                el.statsPanel.classList.remove('expanded');
+                if (el.statsPill) el.statsPill.classList.remove('hidden');
+            }
+        });
 
         // time controls
         document.querySelectorAll('.tc').forEach(btn => {
@@ -213,6 +238,10 @@ const UI = (() => {
         el.statPeaceBar.style.width = (pN*100) + '%';
         el.statHealthBar.style.width= (hlN*100) + '%';
         el.statClimateBar.style.width = (clN*100) + '%';
+
+        // mobile pill
+        if (el.pillPop)   el.pillPop.textContent   = '🌍 ' + formatPop(totalPop);
+        if (el.pillHappy) el.pillHappy.textContent = '☺ ' + Math.round(hN*100) + '%';
 
         el.activeEventsCount.textContent = Events.countActive();
     }
