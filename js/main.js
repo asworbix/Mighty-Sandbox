@@ -153,7 +153,6 @@ const Main = (() => {
         if (world.speed > 0 && Math.random() < 0.02 * (dt/16)) {
             Arcs.spawnAmbientTrade();
         }
-        if (Math.random() < 0.0012 * (dt/16)) spawnShootingStar();
 
         requestAnimationFrame(loop);
     }
@@ -385,16 +384,6 @@ const Main = (() => {
         return (m*1000).toFixed(0) + 'K';
     }
     function pickRandom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
-
-    function spawnShootingStar() {
-        const s = document.createElement('div');
-        s.className = 'shooting-star';
-        s.style.top = (5 + Math.random() * 40) + '%';
-        s.style.left = -10 + 'vw';
-        s.style.animationDuration = (1.6 + Math.random() * 1.4) + 's';
-        document.body.appendChild(s);
-        setTimeout(() => s.remove(), 3200);
-    }
 
     /* Easter eggs */
     function runEasterEgg(which) {

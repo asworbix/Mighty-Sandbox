@@ -147,27 +147,6 @@ body {
 }
 @keyframes drift { to { transform: translate3d(-80px, 40px, 0); } }
 
-/* occasional shooting star */
-.shooting-star {
-    position: fixed;
-    top: 20%;
-    left: -10%;
-    width: 120px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, #fff, transparent);
-    opacity: 0;
-    transform: rotate(12deg);
-    z-index: 1;
-    pointer-events: none;
-    animation: shootStar 2.4s ease-out forwards;
-    box-shadow: 0 0 6px #fff;
-}
-@keyframes shootStar {
-    0% { opacity: 0; transform: translate(0, 0) rotate(12deg); }
-    10% { opacity: 1; }
-    100% { opacity: 0; transform: translate(120vw, 40vh) rotate(12deg); }
-}
-
 /* ============ Canvases ============ */
 
 #earth, #fx, #overlay {
