@@ -760,11 +760,12 @@ const UI = (() => {
             document.querySelectorAll('.tc').forEach(b => {
                 b.classList.toggle('active', parseInt(b.dataset.speed) === 0);
             });
-            // Gaia is live — tune the news engine to real-world sources and start
-            // fetching so the ticker + feed populate even before user clicks 📡.
+            // Gaia is live — show the panel first so News.render() actually
+            // paints into it, then tune the feed to real-world sources.
+            document.getElementById('newsModal')?.classList.remove('hidden');
             News.setWorld('terra'); // internal name kept: terra = live feed implementation
+            News.render();
             if (!opts.silent) {
-                document.getElementById('newsModal')?.classList.remove('hidden');
                 log('Welcome to <b>Gaia</b> — the real Earth, live.', 'info');
             }
         } else {
