@@ -133,8 +133,12 @@ const UI = (() => {
             newsModal?.classList.remove('hidden');
             News.render();
         });
+        // X button always closes. Backdrop-click only dismisses in History
+        // mode — in Gaia mode the panel is docked (no backdrop) and should
+        // stay visible.
         if (newsClose) newsClose.addEventListener('click', () => newsModal?.classList.add('hidden'));
         if (newsModal) newsModal.addEventListener('click', e => {
+            if (document.body.classList.contains('mode-gaia')) return;
             if (e.target === newsModal) newsModal.classList.add('hidden');
         });
         document.querySelectorAll('.news-tab.gaia-tab').forEach(b => {

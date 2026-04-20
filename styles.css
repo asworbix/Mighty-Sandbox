@@ -943,14 +943,39 @@ body.mode-gaia .time-controls,
 body.mode-gaia .layer-btn,
 body.mode-gaia .layer-label,
 body.mode-gaia .stats-pill,
+body.mode-gaia .stats,
 body.mode-gaia .log {
     display: none !important;
 }
-body.mode-gaia .stats .panel-foot { display: none; }
 
 /* a little colorway tint on the brand for each mode */
 body.mode-gaia .brand-glyph { color: var(--accent-2); text-shadow: 0 0 12px var(--accent-2); }
 body.mode-history .brand-glyph { color: var(--gold); text-shadow: 0 0 12px var(--gold); }
+
+/* Gaia mode: make the news modal behave like a persistent side-docked panel
+   — no dimming backdrop, card pinned to the right so the globe stays visible
+   and interactive. */
+body.mode-gaia #newsModal {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    pointer-events: none;
+    place-items: stretch end;
+    padding: 140px 18px 24px 0;
+}
+body.mode-gaia #newsModal .modal-card {
+    pointer-events: auto;
+    width: 420px;
+    max-height: calc(100vh - 160px);
+    border: 1px solid rgba(122,162,255,0.25);
+    box-shadow: 0 16px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(122,162,255,0.08);
+}
+body.mode-gaia #newsModal .modal-head .panel-btn { display: none; } /* no close in Gaia */
+
+@media (max-width: 860px) {
+    body.mode-gaia #newsModal { padding: 96px 8px 86px; place-items: stretch center; }
+    body.mode-gaia #newsModal .modal-card { width: 100%; max-height: calc(100vh - 190px); }
+}
 
 @media (max-width: 620px) {
     .mode-tab { padding: 6px 10px; font-size: 10px; letter-spacing: 0.16em; }
