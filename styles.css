@@ -1064,6 +1064,10 @@ body {
     background: var(--accent);
     border-color: var(--accent);
 }
+/* default-hide Terra sub-tabs until JS flips the world */
+.news-tab.terra-tab { display: none; }
+.modal[data-world="terra"] .news-tab.terra-tab { display: inline-block; }
+.modal[data-world="terra"] .news-tab.gaia-tab { display: none; }
 .modal[data-world="terra"] .news-tab.active {
     background: var(--accent-2);
     border-color: var(--accent-2);
