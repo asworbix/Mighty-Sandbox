@@ -411,22 +411,22 @@ const MapView = (() => {
             ctx.fill(cachedPaths.land);
         }
 
-        // countries — Path2D cached, fill cached, daylight tint live (cheap)
+        // countries — Path2D cached, fill cached as RGB triples
         ctx.lineWidth = 0.5;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
         for (const cp of cachedPaths.countries) {
             const id = cp.feature.idStr;
             const cs = world.countryState[id];
-            let fill = countryFillCache[id];
-            if (!fill) {
-                fill = cs ? tintForLayer(cs) : '#1b2130';
-                countryFillCache[id] = fill;
+            let baseRgb = countryFillCache[id];
+            if (!baseRgb) {
+                baseRgb = cs ? tintForLayer(cs) : HEX_BASE.slice();
+                countryFillCache[id] = baseRgb;
             }
             const sInt = sunCountryCache[id];
-            if (sInt !== undefined) fill = tintByDaylight(fill, sInt);
-            if (id === hoverId)   fill = brighten(fill, 0.4);
-            if (id === clickedId) fill = brighten(fill, 0.65);
-            ctx.fillStyle = fill;
+            let rgb = sInt !== undefined ? applyDaylight(baseRgb, sInt) : baseRgb;
+            if (id === hoverId)   rgb = brightenRgb(rgb, 0.4);
+            if (id === clickedId) rgb = brightenRgb(rgb, 0.65);
+            ctx.fillStyle = rgbStr(rgb[0], rgb[1], rgb[2]);
             ctx.fill(cp.p2d);
             ctx.stroke(cp.p2d);
         }
@@ -478,39 +478,66 @@ const MapView = (() => {
         fxCtx.fillRect(0, 0, width, height);
     }
 
-    /* ---------- data layers → fill color ---------- */
+    /* ---------- data layers → fill color ----------
+       All color helpers below operate on [r,g,b] triples. The render loop
+       allocates exactly one rgb() string per country per frame, instead of
+       parsing several strings via regex on every paint. */
+
+    const HEX_BASE     = parseHex('#1b2130');
+    const HEX_GREEN    = parseHex('#2c4a36');
+    const HEX_RED      = parseHex('#3a1824');
+    const HEX_GOLD     = parseHex('#3a2d14');
+    const HEX_DARK_R   = parseHex('#441616');
+    const HEX_DARK_PUR = parseHex('#331f40');
 
     function tintForLayer(cs) {
         if (dataLayer === 'mood') {
             const green = Math.max(0, cs.happy - 0.5) * 2;
             const red   = Math.max(0, 0.5 - cs.happy) * 2;
-            const gold  = Math.max(0, cs.econ - 0.5) * 2;
-            let f = mix('#1b2130', [
-                ['#2c4a36', green*0.6],
-                ['#3a1824', red*0.6],
-                ['#3a2d14', gold*0.3],
-            ]);
-            if (cs.peace < 0.3) f = mix(f, [['#441616', (0.3-cs.peace)*2]]);
-            if (cs.health < 0.3) f = mix(f, [['#331f40', (0.3-cs.health)*2]]);
-            return f;
+            const gold  = Math.max(0, cs.econ  - 0.5) * 2;
+            let rgb = HEX_BASE.slice();
+            rgb = mixRgb(rgb, HEX_GREEN, green*0.6);
+            rgb = mixRgb(rgb, HEX_RED,   red*0.6);
+            rgb = mixRgb(rgb, HEX_GOLD,  gold*0.3);
+            if (cs.peace  < 0.3) rgb = mixRgb(rgb, HEX_DARK_R,   (0.3-cs.peace)*2);
+            if (cs.health < 0.3) rgb = mixRgb(rgb, HEX_DARK_PUR, (0.3-cs.health)*2);
+            return rgb;
         }
-        if (dataLayer === 'happy')   return heat(cs.happy,   '#3a1824', '#2c4a36');
-        if (dataLayer === 'peace')   return heat(cs.peace,   '#442a14', '#1f3a4a');
-        if (dataLayer === 'econ')    return heat(cs.econ,    '#2a1a2a', '#4a3a14');
-        if (dataLayer === 'health')  return heat(cs.health,  '#331f40', '#1f4a3a');
-        if (dataLayer === 'climate') return heat(cs.climate, '#4a2a14', '#1b3a4a');
+        if (dataLayer === 'happy')   return heatRgb(cs.happy,   HEX_RED,    HEX_GREEN);
+        if (dataLayer === 'peace')   return heatRgb(cs.peace,   parseHex('#442a14'), parseHex('#1f3a4a'));
+        if (dataLayer === 'econ')    return heatRgb(cs.econ,    parseHex('#2a1a2a'), parseHex('#4a3a14'));
+        if (dataLayer === 'health')  return heatRgb(cs.health,  parseHex('#331f40'), parseHex('#1f4a3a'));
+        if (dataLayer === 'climate') return heatRgb(cs.climate, parseHex('#4a2a14'), parseHex('#1b3a4a'));
         if (dataLayer === 'pop')     {
-            // relative popularity (log scale)
             const t = Math.min(1, Math.log10(Math.max(0.01, cs.pop)) / 3.2);
-            return heat(t, '#151a24', '#3a5a1a');
+            return heatRgb(t, parseHex('#151a24'), parseHex('#3a5a1a'));
         }
-        return '#1b2130';
+        return HEX_BASE.slice();
     }
 
-    function heat(v, lo, hi) {
-        const t = Math.max(0, Math.min(1, v));
-        return lerpColor(lo, hi, t);
+    function mixRgb(base, layer, t) {
+        if (t <= 0) return base;
+        const u = 1 - t;
+        return [base[0]*u + layer[0]*t, base[1]*u + layer[1]*t, base[2]*u + layer[2]*t];
     }
+    function heatRgb(v, lo, hi) {
+        const t = Math.max(0, Math.min(1, v));
+        const u = 1 - t;
+        return [lo[0]*u + hi[0]*t, lo[1]*u + hi[1]*t, lo[2]*u + hi[2]*t];
+    }
+    function applyDaylight(rgb, sInt) {
+        if (sInt > 0.5) {
+            const t = (sInt - 0.5) * 0.3;
+            return [Math.min(255, rgb[0]+30*t), Math.min(255, rgb[1]+22*t), Math.min(255, rgb[2]+12*t)];
+        } else {
+            const t = (0.5 - sInt);
+            return [rgb[0]*(1-t*0.7), rgb[1]*(1-t*0.7), rgb[2]*(1-t*0.5)];
+        }
+    }
+    function brightenRgb(rgb, t) {
+        return [Math.min(255, rgb[0]+255*t), Math.min(255, rgb[1]+255*t), Math.min(255, rgb[2]+255*t)];
+    }
+    function rgbStr(r, g, b) { return 'rgb(' + (r|0) + ',' + (g|0) + ',' + (b|0) + ')'; }
 
     /* ---------- color helpers ---------- */
 
