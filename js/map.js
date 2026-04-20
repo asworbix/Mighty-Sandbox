@@ -274,22 +274,57 @@ const MapView = (() => {
         return mode;
     }
 
+    /* Unified wheel handler: distinguishes trackpad pan, trackpad pinch,
+       and mouse-wheel zoom. Uses exp-based factors for smooth continuous
+       zoom rather than stepped 10% jumps.
+
+         - ctrlKey present  → trackpad pinch (or Ctrl+wheel) → smooth zoom
+         - deltaMode pixel + small magnitude → trackpad two-finger pan
+         - anything else    → mouse wheel → smooth zoom */
     function onWheel(e) {
         e.preventDefault();
+        const isPinch     = e.ctrlKey;
+        const smallDelta  = e.deltaMode === 0 && Math.abs(e.deltaY) < 50 && Math.abs(e.deltaX) < 50;
+        const trackpadPan = !isPinch && smallDelta;
+        if (trackpadPan) {
+            panBy(e.deltaX, e.deltaY);
+        } else {
+            // pinch = very fine; wheel = coarser. Both use exp for smoothness.
+            const k = isPinch ? 0.015 : 0.0035;
+            zoomBy(Math.exp(-e.deltaY * k), e.clientX, e.clientY);
+        }
+    }
+
+    function zoomBy(factor, cx, cy) {
         const prev = scale;
-        const factor = e.deltaY < 0 ? 1.12 : 0.9;
-        const newScale = Math.max(160, Math.min(3200, prev * factor));
+        const maxS = mode === 'globe' ? 1800 : 3200;
+        const minS = 140;
+        const newScale = Math.max(minS, Math.min(maxS, prev * factor));
         const actualK = newScale / prev;
-        // zoom toward the cursor (flat mode only; globe just scales from center)
-        if (mode !== 'globe' && actualK !== 1) {
+        if (actualK === 1) return;
+        if (mode !== 'globe') {
+            // flat: keep the point under cursor pinned
             const T0x = translate[0] + width / 2;
             const T0y = translate[1] + height / 2;
-            const T1x = e.clientX - actualK * (e.clientX - T0x);
-            const T1y = e.clientY - actualK * (e.clientY - T0y);
+            const T1x = cx - actualK * (cx - T0x);
+            const T1y = cy - actualK * (cy - T0y);
             translate[0] = T1x - width / 2;
             translate[1] = T1y - height / 2;
         }
         scale = newScale;
+        updateProjection();
+    }
+
+    function panBy(dx, dy) {
+        // Trackpad two-finger pan — follow finger direction (opposite of drag).
+        if (mode === 'globe') {
+            rotate[0] -= dx * 0.28;
+            rotate[1] = Math.max(-89, Math.min(89, rotate[1] + dy * 0.28));
+            autoRotate = false;
+        } else {
+            translate[0] -= dx;
+            translate[1] -= dy;
+        }
         updateProjection();
     }
 
