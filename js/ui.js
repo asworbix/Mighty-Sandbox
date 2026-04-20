@@ -221,6 +221,11 @@ const UI = (() => {
         // random rotating prompt hints
         rotateHints();
 
+        // site-wide mode switcher (Gaia / Terra)
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.addEventListener('click', () => setMode(tab.dataset.mode));
+        });
+
         // first-load onboarding: pulse the prompt, focus it after a beat
         const formEl = document.querySelector('.prompt');
         if (formEl) formEl.classList.add('first-pulse');
@@ -733,6 +738,37 @@ const UI = (() => {
             }).catch(() => log('Could not access clipboard.', 'warn'));
         } else {
             log(`Share this URL: <em>${s}</em>`, 'info');
+        }
+    }
+
+    /* Site-wide mode: 'gaia' (sandbox, default) or 'terra' (watch real Earth). */
+    let previousSpeed = 1;
+    function setMode(mode) {
+        if (mode !== 'gaia' && mode !== 'terra') return;
+        document.querySelectorAll('.mode-tab').forEach(t => {
+            const on = t.dataset.mode === mode;
+            t.classList.toggle('active', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        document.body.classList.toggle('mode-terra', mode === 'terra');
+        document.body.classList.toggle('mode-gaia',  mode === 'gaia');
+        if (mode === 'terra') {
+            if (world.speed > 0) previousSpeed = world.speed;
+            world.speed = 0;
+            document.querySelectorAll('.tc').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.speed) === 0);
+            });
+            // Open the Current modal on the Terra side; user sees live news
+            document.getElementById('newsModal')?.classList.remove('hidden');
+            News.setWorld('terra');
+            log('Switched to <b>Terra</b> — the real Earth, live.', 'info');
+        } else {
+            world.speed = previousSpeed || 1;
+            document.querySelectorAll('.tc').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.speed) === world.speed);
+            });
+            document.getElementById('newsModal')?.classList.add('hidden');
+            log('Back to <b>Gaia</b> — shape the world.', 'good');
         }
     }
 

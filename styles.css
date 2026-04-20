@@ -897,6 +897,77 @@ body {
 
 @media (max-width: 860px) { .ticker { display: none; } }
 
+/* ============ Site-wide mode switch (Gaia / Terra) ============ */
+
+.mode-switch {
+    display: flex;
+    gap: 0;
+    padding: 4px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+}
+.mode-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    padding: 8px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    transition: 0.2s;
+    position: relative;
+}
+.mode-tab .mode-ic { font-size: 15px; line-height: 1; }
+.mode-tab .mode-sub {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    opacity: 0.5;
+    margin-left: 2px;
+    font-weight: 400;
+}
+.mode-tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.mode-tab.active[data-mode="gaia"] {
+    color: var(--bg);
+    background: var(--accent);
+    box-shadow: 0 0 14px rgba(0,231,255,0.3);
+}
+.mode-tab.active[data-mode="terra"] {
+    color: var(--bg);
+    background: var(--accent-2);
+    box-shadow: 0 0 14px rgba(122,162,255,0.3);
+}
+.mode-tab.active .mode-sub { opacity: 0.8; color: var(--bg); }
+
+/* Terra mode: the interactive sandbox elements recede */
+body.mode-terra .prompt-wrap,
+body.mode-terra .timeline-wrap,
+body.mode-terra .quests,
+body.mode-terra .time-controls,
+body.mode-terra .layer-btn,
+body.mode-terra .layer-label,
+body.mode-terra .stats-pill {
+    display: none !important;
+}
+body.mode-terra .log { display: flex !important; }
+body.mode-terra .stats .panel-foot { display: none; }
+
+/* a little colorway tint on the brand for each mode */
+body.mode-terra .brand-glyph { color: var(--accent-2); text-shadow: 0 0 12px var(--accent-2); }
+
+@media (max-width: 620px) {
+    .mode-tab { padding: 6px 10px; font-size: 10px; letter-spacing: 0.16em; }
+    .mode-tab .mode-sub { display: none; }
+}
+
 /* ============ Current / News modal ============ */
 
 .news-btn {
