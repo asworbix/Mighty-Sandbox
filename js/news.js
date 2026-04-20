@@ -349,13 +349,15 @@ const News = (() => {
         render();
     }
 
-    /* Run every frame; actually emits a few items per second. */
+    /* Run every frame; actually emits a few items per second. Only
+       re-renders when the Gaia world is visible — Terra doesn't mutate
+       every 180ms. */
     function tick(dt) {
         lastRefresh += dt;
         if (lastRefresh < 180) return;
         lastRefresh = 0;
         for (let i = 0; i < 3; i++) tickOnce(false);
-        render();
+        if (world_tab === 'gaia') render();
     }
 
     function tickOnce(initial) {
@@ -484,7 +486,8 @@ const News = (() => {
         if (terraActiveSection === 'trending') entry = terraCache.trending;
         else entry = terraCache[terraActiveSection]?.[terraActiveLocation];
 
-        if (!entry || entry.loading) {
+        // First-load state: no cached items yet
+        if (!entry || (entry.loading && (!entry.items || entry.items.length === 0))) {
             panel.innerHTML = '<li class="news-loading">📡 tuning into the live wire…</li>';
             return;
         }
