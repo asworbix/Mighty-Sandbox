@@ -265,17 +265,31 @@
                     <input type="search" id="newsSearch" placeholder="search city, country or topic…" spellcheck="false" />
                 </div>
                 <div class="news-tabs">
-                    <button class="news-tab active" data-cat="all">All</button>
-                    <button class="news-tab" data-cat="breaking">Breaking</button>
-                    <button class="news-tab" data-cat="politics">Politics</button>
-                    <button class="news-tab" data-cat="markets">Markets</button>
-                    <button class="news-tab" data-cat="science">Science</button>
-                    <button class="news-tab" data-cat="climate">Climate</button>
-                    <button class="news-tab" data-cat="culture">Culture</button>
-                    <button class="news-tab" data-cat="sports">Sports</button>
-                    <button class="news-tab" data-cat="life">Life</button>
+                    <!-- Gaia sub-tabs (topical categories, procedural feed) -->
+                    <button class="news-tab gaia-tab active" data-cat="all">All</button>
+                    <button class="news-tab gaia-tab" data-cat="breaking">Breaking</button>
+                    <button class="news-tab gaia-tab" data-cat="politics">Politics</button>
+                    <button class="news-tab gaia-tab" data-cat="markets">Markets</button>
+                    <button class="news-tab gaia-tab" data-cat="science">Science</button>
+                    <button class="news-tab gaia-tab" data-cat="climate">Climate</button>
+                    <button class="news-tab gaia-tab" data-cat="culture">Culture</button>
+                    <button class="news-tab gaia-tab" data-cat="sports">Sports</button>
+                    <button class="news-tab gaia-tab" data-cat="life">Life</button>
+                    <!-- Terra sub-tabs (live sources) -->
+                    <button class="news-tab terra-tab active" data-section="wire">📰 Wire</button>
+                    <button class="news-tab terra-tab" data-section="frontline">⚔ Frontline</button>
+                    <button class="news-tab terra-tab" data-section="trending">🔥 Trending</button>
+                    <button class="news-tab terra-tab" data-section="tv">📺 Live TV</button>
                 </div>
+                <!-- Terra: per-country location chip bar (shown for Wire / Frontline) -->
+                <div class="news-loc-bar" id="newsLocBar"></div>
                 <ul class="news-list" id="newsList"></ul>
+                <!-- Terra > Live TV: video stage + channel grid -->
+                <div class="tv-stage" id="tvStage" style="display:none">
+                    <div class="tv-frame-wrap"></div>
+                    <div class="tv-now" id="tvNowName">—</div>
+                    <div class="tv-grid" id="tvGrid"></div>
+                </div>
             </div>
         </div>
 

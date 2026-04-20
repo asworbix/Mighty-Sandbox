@@ -118,78 +118,222 @@ const News = (() => {
     let lastRefresh = 0;
     let world_tab = 'gaia';    // 'gaia' | 'terra'
 
-    /* Terra = baseline real-world dispatches. These are curated
-       headlines reflecting the actual state of Earth in April 2026.
-       Independent of sim time, so you always see "home" when you
-       want a break from your own cataclysms. */
-    const TERRA_ITEMS = [
-        // breaking-ish global axes
-        { cid:'840', tag:'politics', text:"Washington — U.S. election-season noise dominates cable news, with immigration and inflation the dominant themes." },
-        { cid:'804', tag:'politics', text:"Kyiv — Ukrainian forces hold the line along the Dnipro; Western aid packages debated in capitals." },
-        { cid:'643', tag:'politics', text:"Moscow — Kremlin briefings insist the 'special operation' remains on schedule as sanctions bite." },
-        { cid:'376', tag:'politics', text:"Jerusalem — fragile ceasefire holds across parts of Gaza; hostages, reconstruction, and a two-state future dominate talks." },
-        { cid:'156', tag:'politics', text:"Beijing — Politburo signals steady growth targets; property sector still the big unknown." },
-        { cid:'356', tag:'politics', text:"New Delhi — India pushes past 1.44 billion people; coalition politics dominate the legislative agenda." },
-        { cid:'826', tag:'politics', text:"London — Labour government juggles NHS reform and housing pressures." },
-        { cid:'250', tag:'politics', text:"Paris — legislative deadlock continues; pension reform debates flare." },
-        { cid:'276', tag:'politics', text:"Berlin — coalition tensions over defense budgets and energy policy." },
-        { cid:'392', tag:'politics', text:"Tokyo — LDP factions jockey ahead of a summer election." },
-        { cid:'076', tag:'politics', text:"Brasília — Amazon protections debated as deforestation figures drop but remain high." },
+    /* ============================================================
+       TERRA — LIVE. GDELT for articles (keyless, CORS-ok),
+       Reddit r/worldnews for an extra trend signal, YouTube live
+       embeds of real broadcast channels. Per-country filters so
+       Denmark, Kenya, Peru, etc. all get their own feed.
+       ============================================================ */
 
-        // markets / economy
-        { cid:'840', tag:'markets', text:"New York — S&P nudges record territory as AI megacaps lift the index." },
-        { cid:'392', tag:'markets', text:"Tokyo — Nikkei tests 40,000 amid a weaker yen." },
-        { cid:'156', tag:'markets', text:"Shanghai — consumer confidence soft; property developers issue new bonds." },
-        { cid:'276', tag:'markets', text:"Frankfurt — ECB maintains cautious rate path; core inflation easing." },
-        { cid:'826', tag:'markets', text:"London — FTSE 100 hits fresh highs on commodity strength." },
-        { cid:'724', tag:'markets', text:"Madrid — tourism surge drives a strong quarter for Spanish hoteliers." },
-        { cid:'410', tag:'markets', text:"Seoul — chip exports rebound; Samsung and SK Hynix pace gains." },
-        { cid:'784', tag:'markets', text:"Dubai — free-zone announcements push AI and fintech listings." },
-
-        // science / tech
-        { cid:'840', tag:'science', text:"San Francisco — next-gen foundation models push reasoning and multimodal benchmarks higher." },
-        { cid:'156', tag:'science', text:"Hefei — Chinese team reports record-duration plasma in a fusion tokamak." },
-        { cid:'826', tag:'science', text:"Cambridge — DeepMind paper claims progress on protein design beyond AlphaFold." },
-        { cid:'392', tag:'science', text:"Tsukuba — Japanese humanoid robot completes a multi-hour factory shift autonomously." },
-        { cid:'356', tag:'science', text:"Bengaluru — ISRO readies next Chandrayaan mission; Gaganyaan crewed tests continue." },
-        { cid:'250', tag:'science', text:"Paris — European fusion consortium hits milestone on net-energy pathway." },
-        { cid:'840', tag:'science', text:"Hawthorne — SpaceX Starship program eyes the next full-stack orbital attempt." },
-
-        // climate
-        { cid:'036', tag:'climate', text:"Canberra — record marine heatwave bleaches more of the Great Barrier Reef." },
-        { cid:'076', tag:'climate', text:"Brasília — Amazon rainfall erratic; scientists warn of tipping-point thresholds." },
-        { cid:'840', tag:'climate', text:"Washington — NOAA confirms another year among the warmest on record." },
-        { cid:'826', tag:'climate', text:"London — Thames Barrier closures break long-term averages." },
-        { cid:'364', tag:'climate', text:"Tehran — heatwave pushes temperatures past 50°C across the Persian Gulf." },
-        { cid:'352', tag:'climate', text:"Reykjavík — glacier retreats leave new lakes on maps." },
-        { cid:'554', tag:'climate', text:"Wellington — Antarctic sea ice hits another record-low maximum." },
-
-        // culture
-        { cid:'410', tag:'culture', text:"Seoul — K-pop's fourth generation sells out global stadiums; HYBE posts another strong quarter." },
-        { cid:'076', tag:'culture', text:"Rio de Janeiro — Carnaval returns at full scale; samba schools compete at the Sambódromo." },
-        { cid:'380', tag:'culture', text:"Milan — Design Week draws the world; furniture and architecture take center stage." },
-        { cid:'250', tag:'culture', text:"Paris — the louvre extends hours as a record number of visitors file past the Mona Lisa." },
-        { cid:'356', tag:'culture', text:"Mumbai — Bollywood's biggest stars cross into global streaming dramas." },
-        { cid:'392', tag:'culture', text:"Kyoto — cherry blossoms peak a few days early; parks overflow with visitors." },
-        { cid:'484', tag:'culture', text:"Mexico City — Día de los Muertos celebrations draw millions downtown." },
-
-        // sports
-        { cid:'840', tag:'sports', text:"Los Angeles — LA28 Olympic venue plans finalize, with new events including flag football." },
-        { cid:'250', tag:'sports', text:"Paris — clubs test VAR changes after a dramatic Champions League upset." },
-        { cid:'032', tag:'sports', text:"Buenos Aires — Argentina's national team tunes up for Copa América." },
-        { cid:'826', tag:'sports', text:"Manchester — Premier League title race goes down to the final matchday." },
-
-        // life / daily
-        { cid:'156', tag:'life', text:"Beijing — morning commute moves more than 10 million people through the metro." },
-        { cid:'356', tag:'life', text:"Delhi — chai vendors set up across the capital's sidewalks as offices open." },
-        { cid:'840', tag:'life', text:"Brooklyn — a new generation packs vinyl stores and film photography studios." },
-        { cid:'392', tag:'life', text:"Tokyo — 24-hour conbini culture continues to fuel the city through midnight." },
-        { cid:'032', tag:'life', text:"Buenos Aires — the mate thermos is everywhere as the afternoon unfolds." },
-        { cid:'764', tag:'life', text:"Bangkok — night markets spill out across Ratchada and Chinatown." },
+    // Curated location chips — 'world' + a useful spread of nations.
+    // `q` is the GDELT query string: source country (FIPS) OR mentions
+    // of the country name + capital + major cities.
+    const TERRA_LOCATIONS = [
+        { id:'world', name:'World', flag:'🌍', q:'sourcelang:eng' },
+        { id:'840', name:'United States',   flag:'🇺🇸', q:'(sourcecountry:US OR "United States" OR "New York" OR Washington OR "Los Angeles" OR Chicago OR Boston) sourcelang:eng' },
+        { id:'826', name:'United Kingdom',  flag:'🇬🇧', q:'(sourcecountry:UK OR Britain OR London OR Manchester OR Edinburgh) sourcelang:eng' },
+        { id:'276', name:'Germany',         flag:'🇩🇪', q:'(sourcecountry:GM OR Germany OR Berlin OR Munich OR Hamburg OR Frankfurt) sourcelang:eng' },
+        { id:'250', name:'France',          flag:'🇫🇷', q:'(sourcecountry:FR OR France OR Paris OR Lyon OR Marseille) sourcelang:eng' },
+        { id:'380', name:'Italy',           flag:'🇮🇹', q:'(sourcecountry:IT OR Italy OR Rome OR Milan OR Naples) sourcelang:eng' },
+        { id:'724', name:'Spain',           flag:'🇪🇸', q:'(sourcecountry:SP OR Spain OR Madrid OR Barcelona) sourcelang:eng' },
+        { id:'620', name:'Portugal',        flag:'🇵🇹', q:'(sourcecountry:PO OR Portugal OR Lisbon OR Porto) sourcelang:eng' },
+        { id:'528', name:'Netherlands',     flag:'🇳🇱', q:'(sourcecountry:NL OR Netherlands OR Amsterdam OR Rotterdam) sourcelang:eng' },
+        { id:'056', name:'Belgium',         flag:'🇧🇪', q:'(sourcecountry:BE OR Belgium OR Brussels OR Antwerp) sourcelang:eng' },
+        { id:'756', name:'Switzerland',     flag:'🇨🇭', q:'(sourcecountry:SZ OR Switzerland OR Zurich OR Geneva OR Bern) sourcelang:eng' },
+        { id:'040', name:'Austria',         flag:'🇦🇹', q:'(sourcecountry:AU OR Austria OR Vienna) sourcelang:eng' },
+        { id:'372', name:'Ireland',         flag:'🇮🇪', q:'(sourcecountry:EI OR Ireland OR Dublin) sourcelang:eng' },
+        { id:'208', name:'Denmark',         flag:'🇩🇰', q:'(sourcecountry:DA OR Denmark OR Copenhagen OR Aarhus) sourcelang:eng' },
+        { id:'578', name:'Norway',          flag:'🇳🇴', q:'(sourcecountry:NO OR Norway OR Oslo OR Bergen) sourcelang:eng' },
+        { id:'752', name:'Sweden',          flag:'🇸🇪', q:'(sourcecountry:SW OR Sweden OR Stockholm OR Gothenburg) sourcelang:eng' },
+        { id:'246', name:'Finland',         flag:'🇫🇮', q:'(sourcecountry:FI OR Finland OR Helsinki) sourcelang:eng' },
+        { id:'352', name:'Iceland',         flag:'🇮🇸', q:'(sourcecountry:IC OR Iceland OR Reykjavik) sourcelang:eng' },
+        { id:'616', name:'Poland',          flag:'🇵🇱', q:'(sourcecountry:PL OR Poland OR Warsaw OR Krakow) sourcelang:eng' },
+        { id:'203', name:'Czechia',         flag:'🇨🇿', q:'(sourcecountry:EZ OR Czech OR Prague) sourcelang:eng' },
+        { id:'348', name:'Hungary',         flag:'🇭🇺', q:'(sourcecountry:HU OR Hungary OR Budapest) sourcelang:eng' },
+        { id:'300', name:'Greece',          flag:'🇬🇷', q:'(sourcecountry:GR OR Greece OR Athens) sourcelang:eng' },
+        { id:'792', name:'Turkey',          flag:'🇹🇷', q:'(sourcecountry:TU OR Turkey OR Istanbul OR Ankara) sourcelang:eng' },
+        { id:'643', name:'Russia',          flag:'🇷🇺', q:'(sourcecountry:RS OR Russia OR Moscow OR "Saint Petersburg") sourcelang:eng' },
+        { id:'804', name:'Ukraine',         flag:'🇺🇦', q:'(sourcecountry:UP OR Ukraine OR Kyiv OR Kharkiv OR Lviv OR Odesa) sourcelang:eng' },
+        { id:'124', name:'Canada',          flag:'🇨🇦', q:'(sourcecountry:CA OR Canada OR Toronto OR Vancouver OR Montreal) sourcelang:eng' },
+        { id:'484', name:'Mexico',          flag:'🇲🇽', q:'(sourcecountry:MX OR Mexico OR "Mexico City" OR Guadalajara) sourcelang:eng' },
+        { id:'076', name:'Brazil',          flag:'🇧🇷', q:'(sourcecountry:BR OR Brazil OR "São Paulo" OR "Rio de Janeiro" OR Brasilia) sourcelang:eng' },
+        { id:'032', name:'Argentina',       flag:'🇦🇷', q:'(sourcecountry:AR OR Argentina OR "Buenos Aires") sourcelang:eng' },
+        { id:'152', name:'Chile',           flag:'🇨🇱', q:'(sourcecountry:CI OR Chile OR Santiago) sourcelang:eng' },
+        { id:'170', name:'Colombia',        flag:'🇨🇴', q:'(sourcecountry:CO OR Colombia OR Bogota) sourcelang:eng' },
+        { id:'604', name:'Peru',            flag:'🇵🇪', q:'(sourcecountry:PE OR Peru OR Lima) sourcelang:eng' },
+        { id:'862', name:'Venezuela',       flag:'🇻🇪', q:'(sourcecountry:VE OR Venezuela OR Caracas) sourcelang:eng' },
+        { id:'156', name:'China',           flag:'🇨🇳', q:'(sourcecountry:CH OR China OR Beijing OR Shanghai OR "Hong Kong" OR Shenzhen) sourcelang:eng' },
+        { id:'392', name:'Japan',           flag:'🇯🇵', q:'(sourcecountry:JA OR Japan OR Tokyo OR Osaka OR Kyoto) sourcelang:eng' },
+        { id:'410', name:'South Korea',     flag:'🇰🇷', q:'(sourcecountry:KS OR "South Korea" OR Seoul OR Busan) sourcelang:eng' },
+        { id:'408', name:'North Korea',     flag:'🇰🇵', q:'("North Korea" OR Pyongyang OR "Kim Jong") sourcelang:eng' },
+        { id:'158', name:'Taiwan',          flag:'🇹🇼', q:'(sourcecountry:TW OR Taiwan OR Taipei) sourcelang:eng' },
+        { id:'356', name:'India',           flag:'🇮🇳', q:'(sourcecountry:IN OR India OR Mumbai OR Delhi OR Bengaluru OR Chennai OR Kolkata) sourcelang:eng' },
+        { id:'586', name:'Pakistan',        flag:'🇵🇰', q:'(sourcecountry:PK OR Pakistan OR Karachi OR Islamabad OR Lahore) sourcelang:eng' },
+        { id:'050', name:'Bangladesh',      flag:'🇧🇩', q:'(sourcecountry:BG OR Bangladesh OR Dhaka) sourcelang:eng' },
+        { id:'360', name:'Indonesia',       flag:'🇮🇩', q:'(sourcecountry:ID OR Indonesia OR Jakarta OR Bali) sourcelang:eng' },
+        { id:'608', name:'Philippines',     flag:'🇵🇭', q:'(sourcecountry:RP OR Philippines OR Manila) sourcelang:eng' },
+        { id:'764', name:'Thailand',        flag:'🇹🇭', q:'(sourcecountry:TH OR Thailand OR Bangkok) sourcelang:eng' },
+        { id:'704', name:'Vietnam',         flag:'🇻🇳', q:'(sourcecountry:VM OR Vietnam OR Hanoi OR "Ho Chi Minh") sourcelang:eng' },
+        { id:'458', name:'Malaysia',        flag:'🇲🇾', q:'(sourcecountry:MY OR Malaysia OR "Kuala Lumpur") sourcelang:eng' },
+        { id:'702', name:'Singapore',       flag:'🇸🇬', q:'(sourcecountry:SN OR Singapore) sourcelang:eng' },
+        { id:'036', name:'Australia',       flag:'🇦🇺', q:'(sourcecountry:AS OR Australia OR Sydney OR Melbourne OR Brisbane) sourcelang:eng' },
+        { id:'554', name:'New Zealand',     flag:'🇳🇿', q:'(sourcecountry:NZ OR "New Zealand" OR Auckland OR Wellington) sourcelang:eng' },
+        { id:'818', name:'Egypt',           flag:'🇪🇬', q:'(sourcecountry:EG OR Egypt OR Cairo) sourcelang:eng' },
+        { id:'682', name:'Saudi Arabia',    flag:'🇸🇦', q:'(sourcecountry:SA OR "Saudi Arabia" OR Riyadh OR Jeddah) sourcelang:eng' },
+        { id:'784', name:'UAE',             flag:'🇦🇪', q:'(sourcecountry:AE OR Emirates OR Dubai OR "Abu Dhabi") sourcelang:eng' },
+        { id:'376', name:'Israel',          flag:'🇮🇱', q:'(sourcecountry:IS OR Israel OR Jerusalem OR "Tel Aviv") sourcelang:eng' },
+        { id:'364', name:'Iran',            flag:'🇮🇷', q:'(sourcecountry:IR OR Iran OR Tehran) sourcelang:eng' },
+        { id:'368', name:'Iraq',            flag:'🇮🇶', q:'(sourcecountry:IZ OR Iraq OR Baghdad) sourcelang:eng' },
+        { id:'710', name:'South Africa',    flag:'🇿🇦', q:'(sourcecountry:SF OR "South Africa" OR Johannesburg OR "Cape Town") sourcelang:eng' },
+        { id:'566', name:'Nigeria',         flag:'🇳🇬', q:'(sourcecountry:NI OR Nigeria OR Lagos OR Abuja) sourcelang:eng' },
+        { id:'404', name:'Kenya',           flag:'🇰🇪', q:'(sourcecountry:KE OR Kenya OR Nairobi) sourcelang:eng' },
+        { id:'231', name:'Ethiopia',        flag:'🇪🇹', q:'(sourcecountry:ET OR Ethiopia OR "Addis Ababa") sourcelang:eng' },
+        { id:'504', name:'Morocco',         flag:'🇲🇦', q:'(sourcecountry:MO OR Morocco OR Rabat OR Casablanca) sourcelang:eng' },
     ];
 
+    // Real 24/7 live news channels on YouTube.
+    const TV_CHANNELS = [
+        { id:'UC16niRr50-MSBwiO3YDb3RA', name:'BBC News',            flag:'🇬🇧', home:'London' },
+        { id:'UCQfwfsi5VrQ8yKZ-UWmAEFg', name:'France 24 English',   flag:'🇫🇷', home:'Paris' },
+        { id:'UCknLrEdhRCp1aegoMqRaCZg', name:'DW News',             flag:'🇩🇪', home:'Berlin' },
+        { id:'UCNye-wNBqNL5ZzHSJj3l8Bg', name:'Al Jazeera English',  flag:'🇶🇦', home:'Doha' },
+        { id:'UCoMdktPbSTixAyNGwb-UYkQ', name:'Sky News',            flag:'🇬🇧', home:'London' },
+        { id:'UCIALMKvObZNtJ6AmdCLP7Lg', name:'Bloomberg TV',        flag:'🇺🇸', home:'New York' },
+        { id:'UC_eq_g42VFIzUQwI9YKE4Bw', name:'Bloomberg Quicktake', flag:'🇺🇸', home:'New York' },
+        { id:'UCVgO39Bk5sMo66-6o6Spn6Q', name:'ABC News Australia',  flag:'🇦🇺', home:'Sydney' },
+        { id:'UC7fWeaHhqgM4Ry-RMpM2YYw', name:'TRT World',           flag:'🇹🇷', home:'Istanbul' },
+        { id:'UC_gUM8rL-Lrg6O3adPW9K1g', name:'WION',                flag:'🇮🇳', home:'Delhi' },
+    ];
+
+    // Terra state
+    let terraActiveSection = 'wire';        // 'wire' | 'frontline' | 'trending' | 'tv'
+    let terraActiveLocation = 'world';
+    let terraActiveChannel = null;
+    const terraCache = { wire: {}, frontline: {}, trending: { items:[], fetchedAt:0, loading:false, error:null } };
+
+    function activeLocation() { return TERRA_LOCATIONS.find(l => l.id === terraActiveLocation) || TERRA_LOCATIONS[0]; }
+
+    async function fetchGdelt(query) {
+        const url = 'https://api.gdeltproject.org/api/v2/doc/doc?' + new URLSearchParams({
+            query, mode:'artlist', format:'json', maxrecords:'60', sort:'datedesc', timespan:'24h',
+        });
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('GDELT ' + res.status);
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { return []; }
+        if (!data.articles) return [];
+        return data.articles.map(art => {
+            const a2 = FIPS_TO_A2[art.sourcecountry] || art.sourcecountry;
+            return {
+                id: art.url,
+                text: decodeHtml(art.title || ''),
+                url: art.url,
+                domain: art.domain || '',
+                cid: ISO_A2_TO_NUM[a2] || null,
+                sourceCountry: art.sourcecountry,
+                time: parseGdeltTime(art.seendate),
+            };
+        }).filter(x => x.text);
+    }
+
+    async function fetchReddit(sub, limit) {
+        const url = `https://www.reddit.com/r/${encodeURIComponent(sub)}/.json?limit=${limit || 25}&raw_json=1`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Reddit ' + res.status);
+        const data = await res.json();
+        const kids = data?.data?.children || [];
+        return kids.map(k => k.data).filter(p => p && p.title).map(p => ({
+            id: 'rd_' + p.id,
+            text: decodeHtml(p.title),
+            url: p.url_overridden_by_dest || ('https://reddit.com' + p.permalink),
+            domain: 'r/' + (p.subreddit || sub),
+            cid: null,
+            time: (p.created_utc || 0) * 1000,
+            score: p.score || 0,
+            source: 'reddit',
+        }));
+    }
+
+    async function ensureTerraData(section, locId) {
+        if (section === 'tv') return; // no fetch needed
+        if (section === 'trending') return ensureTrending();
+        const bucket = terraCache[section];
+        if (!bucket[locId]) bucket[locId] = { items:[], fetchedAt:0, loading:false, error:null };
+        const e = bucket[locId];
+        const now = Date.now();
+        if (e.loading) return;
+        if (e.fetchedAt && now - e.fetchedAt < 180000) return; // 3 min cache
+        e.loading = true; e.error = null;
+        render();
+        try {
+            const loc = TERRA_LOCATIONS.find(l => l.id === locId) || TERRA_LOCATIONS[0];
+            const q = section === 'frontline'
+                ? conflictQuery(loc)
+                : loc.q;
+            e.items = await fetchGdelt(q);
+            e.fetchedAt = now;
+        } catch (err) {
+            e.error = err.message || 'offline';
+        } finally {
+            e.loading = false;
+            render();
+        }
+    }
+
+    async function ensureTrending() {
+        const e = terraCache.trending;
+        const now = Date.now();
+        if (e.loading) return;
+        if (e.fetchedAt && now - e.fetchedAt < 180000) return;
+        e.loading = true; e.error = null;
+        render();
+        const results = await Promise.allSettled([
+            fetchReddit('worldnews', 25),
+            fetchReddit('geopolitics', 15),
+            fetchReddit('popular', 15),
+        ]);
+        const combined = [];
+        for (const r of results) if (r.status === 'fulfilled') combined.push(...r.value);
+        if (combined.length === 0) {
+            e.error = 'couldn\'t reach the social wire (Reddit rate-limit?)';
+        }
+        combined.sort((a,b) => (b.score||0) - (a.score||0));
+        e.items = combined.slice(0, 60);
+        e.fetchedAt = now;
+        e.loading = false;
+        render();
+    }
+
+    function conflictQuery(loc) {
+        const conflict = '(war OR conflict OR military OR strike OR attack OR ceasefire OR offensive OR missile OR drone OR invasion OR troops OR siege OR sanction)';
+        const base = (loc.q || '').replace(/\s*sourcelang:eng\s*$/, '').trim();
+        if (!base) return `${conflict} sourcelang:eng`;
+        return `${base} ${conflict} sourcelang:eng`;
+    }
+
+    function decodeHtml(s) {
+        const t = document.createElement('textarea');
+        t.innerHTML = s || '';
+        return t.value;
+    }
+    function parseGdeltTime(s) {
+        if (!s || s.length < 15) return Date.now();
+        const y = +s.slice(0,4), mo = +s.slice(4,6)-1, d = +s.slice(6,8);
+        const h = +s.slice(9,11), mi = +s.slice(11,13), sec = +s.slice(13,15);
+        return Date.UTC(y, mo, d, h, mi, sec);
+    }
+    function timeAgo(t) {
+        const diff = Math.max(0, Date.now() - t);
+        const m = Math.floor(diff / 60000);
+        if (m < 1) return 'just now';
+        if (m < 60) return m + 'm ago';
+        const h = Math.floor(m / 60);
+        if (h < 24) return h + 'h ago';
+        return Math.floor(h / 24) + 'd ago';
+    }
     function nowStampFor(cid) {
-        const c = COUNTRIES[cid]; if (!c || !world) return '';
+        const c = COUNTRIES[cid]; if (!c) return '';
         const d = new Date();
         const utcH = d.getUTCHours() + d.getUTCMinutes()/60;
         const lh = ((utcH + c.tz) % 24 + 24) % 24;
@@ -288,39 +432,38 @@ const News = (() => {
         return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
     }
 
-    /* Produce the unified feed for the active world-tab. */
-    function currentFeed() {
-        if (world_tab === 'terra') {
-            return TERRA_ITEMS.map(it => {
-                const country = COUNTRIES[it.cid] || { name: 'Earth', tz: 0 };
-                const capital = CAPITALS[it.cid] || country.name;
-                return {
-                    id: 'terra_' + it.cid + '_' + it.text.slice(0, 20),
-                    text: it.text,
-                    country,
-                    capital,
-                    cid: it.cid,
-                    stamp: nowStampFor(it.cid),
-                    priority: /breaking|war|ceasefire|record/i.test(it.text) ? 0.9 : 0.6,
-                    _tag: it.tag,
-                };
-            });
-        }
-        return items;
-    }
-
     function render() {
+        const modal = document.getElementById('newsModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+
+        // Sync world attribute on modal (drives per-world CSS visibility).
+        modal.dataset.world = world_tab;
+        modal.dataset.section = terraActiveSection;
+
+        // Swap visible tab/chip groups
+        syncTabsUI();
+
+        if (world_tab === 'terra' && terraActiveSection === 'tv') {
+            renderTv();
+            return;
+        }
+
         const panel = document.getElementById('newsList');
-        if (!panel || panel.offsetParent === null) return; // invisible, skip
-        const active = document.querySelector('.news-tab.active');
+        if (!panel) return;
+
+        if (world_tab === 'terra') {
+            return renderTerraList(panel);
+        }
+
+        // GAIA
+        const active = document.querySelector('.news-tab.gaia-tab.active');
         const cat = active?.dataset.cat || 'all';
         const q = document.getElementById('newsSearch')?.value?.trim().toLowerCase() || '';
-        const feed = currentFeed();
         const filter = cat === 'all' ? null :
-            (item) => item._tag ? item._tag === cat : (CATEGORIES[cat] && CATEGORIES[cat](item));
+            (item) => (CATEGORIES[cat] && CATEGORIES[cat](item));
         const frag = document.createDocumentFragment();
         let shown = 0;
-        for (const item of feed) {
+        for (const item of items) {
             if (filter && !filter(item)) continue;
             if (q) {
                 const hay = (item.text + ' ' + (item.country?.name || '') + ' ' + (item.capital || '')).toLowerCase();
@@ -332,9 +475,128 @@ const News = (() => {
         }
         panel.innerHTML = '';
         panel.appendChild(frag);
-        if (shown === 0) {
-            panel.innerHTML = '<li class="news-empty">no dispatches match your filter.</li>';
+        if (shown === 0) panel.innerHTML = '<li class="news-empty">no dispatches match your filter.</li>';
+    }
+
+    function renderTerraList(panel) {
+        const q = document.getElementById('newsSearch')?.value?.trim().toLowerCase() || '';
+        let entry;
+        if (terraActiveSection === 'trending') entry = terraCache.trending;
+        else entry = terraCache[terraActiveSection]?.[terraActiveLocation];
+
+        if (!entry || entry.loading) {
+            panel.innerHTML = '<li class="news-loading">📡 tuning into the live wire…</li>';
+            return;
         }
+        if (entry.error && (!entry.items || entry.items.length === 0)) {
+            panel.innerHTML = `<li class="news-error">${entry.error}. <button class="news-retry">retry</button></li>`;
+            panel.querySelector('.news-retry')?.addEventListener('click', () => {
+                if (terraActiveSection === 'trending') ensureTrending();
+                else {
+                    if (terraCache[terraActiveSection][terraActiveLocation]) terraCache[terraActiveSection][terraActiveLocation].fetchedAt = 0;
+                    ensureTerraData(terraActiveSection, terraActiveLocation);
+                }
+            });
+            return;
+        }
+        const list = (entry.items || []).filter(it => !q || it.text.toLowerCase().includes(q));
+        if (list.length === 0) { panel.innerHTML = '<li class="news-empty">nothing on the wire matches.</li>'; return; }
+        const frag = document.createDocumentFragment();
+        for (const it of list.slice(0, 80)) frag.appendChild(renderTerraItem(it));
+        panel.innerHTML = '';
+        panel.appendChild(frag);
+    }
+
+    function renderTerraItem(it) {
+        const li = document.createElement('li');
+        li.className = 'news-item terra-item';
+        const flag = it.cid ? flagEmoji(it.cid) : '🌐';
+        const label = it.domain || (it.cid && COUNTRIES[it.cid]?.name) || 'Earth';
+        li.innerHTML = `
+            <div class="news-head">
+                <span class="news-flag">${flag}</span>
+                <span class="news-city">${escapeHtml(label)}</span>
+                <span class="news-stamp">${timeAgo(it.time)}</span>
+            </div>
+            <div class="news-body">${escapeHtml(it.text)}</div>
+        `;
+        if (it.url) {
+            li.addEventListener('click', () => window.open(it.url, '_blank', 'noopener,noreferrer'));
+        }
+        return li;
+    }
+
+    function escapeHtml(s) {
+        const t = document.createElement('div');
+        t.textContent = s == null ? '' : String(s);
+        return t.innerHTML;
+    }
+
+    function renderTv() {
+        const stage = document.getElementById('tvStage');
+        const grid  = document.getElementById('tvGrid');
+        if (!stage || !grid) return;
+        if (!terraActiveChannel) terraActiveChannel = TV_CHANNELS[0];
+        let frame = document.getElementById('tvFrame');
+        const desired = `https://www.youtube.com/embed/live_stream?channel=${terraActiveChannel.id}&autoplay=1&mute=1`;
+        if (!frame) {
+            frame = document.createElement('iframe');
+            frame.id = 'tvFrame';
+            frame.allow = 'autoplay; encrypted-media; picture-in-picture';
+            frame.setAttribute('allowfullscreen', '');
+            frame.referrerPolicy = 'no-referrer-when-downgrade';
+            stage.querySelector('.tv-frame-wrap')?.appendChild(frame);
+        }
+        if (frame.src !== desired) frame.src = desired;
+        const nameEl = document.getElementById('tvNowName');
+        if (nameEl) nameEl.textContent = `${terraActiveChannel.flag} ${terraActiveChannel.name} · ${terraActiveChannel.home}`;
+        // build channel grid lazily
+        if (grid.childElementCount !== TV_CHANNELS.length) {
+            grid.innerHTML = '';
+            for (const ch of TV_CHANNELS) {
+                const b = document.createElement('button');
+                b.className = 'tv-ch';
+                b.dataset.id = ch.id;
+                b.innerHTML = `<span class="tv-ch-flag">${ch.flag}</span><span class="tv-ch-name">${ch.name}</span>`;
+                b.addEventListener('click', () => { terraActiveChannel = ch; renderTv(); });
+                grid.appendChild(b);
+            }
+        }
+        for (const child of grid.children) {
+            child.classList.toggle('active', child.dataset.id === terraActiveChannel.id);
+        }
+    }
+
+    function stopTv() {
+        const f = document.getElementById('tvFrame');
+        if (f) f.src = 'about:blank';
+    }
+
+    function syncTabsUI() {
+        // Show Gaia tabs vs Terra sections based on world
+        const gaiaTabs  = document.querySelectorAll('.news-tab.gaia-tab');
+        const terraTabs = document.querySelectorAll('.news-tab.terra-tab');
+        gaiaTabs.forEach(t => t.style.display  = world_tab === 'gaia'  ? '' : 'none');
+        terraTabs.forEach(t => t.style.display = world_tab === 'terra' ? '' : 'none');
+        // Active section marker for Terra
+        terraTabs.forEach(t => t.classList.toggle('active', t.dataset.section === terraActiveSection));
+        // Location chip bar visible only for wire/frontline
+        const chipBar = document.getElementById('newsLocBar');
+        if (chipBar) chipBar.style.display =
+            (world_tab === 'terra' && (terraActiveSection === 'wire' || terraActiveSection === 'frontline')) ? 'flex' : 'none';
+        // TV stage visibility
+        const stage = document.getElementById('tvStage');
+        const list  = document.getElementById('newsList');
+        if (stage && list) {
+            const showTv = world_tab === 'terra' && terraActiveSection === 'tv';
+            stage.style.display = showTv ? 'flex' : 'none';
+            list.style.display  = showTv ? 'none' : '';
+            if (!showTv) stopTv();
+        }
+        // Location chip highlight
+        document.querySelectorAll('.news-loc-chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.loc === terraActiveLocation);
+        });
     }
 
     function renderItem(item) {
@@ -359,10 +621,12 @@ const News = (() => {
     }
     function close() {
         document.getElementById('newsModal')?.classList.add('hidden');
+        stopTv();
     }
 
     function setTab(cat) {
-        document.querySelectorAll('.news-tab').forEach(t => {
+        // Gaia category tab
+        document.querySelectorAll('.news-tab.gaia-tab').forEach(t => {
             t.classList.toggle('active', t.dataset.cat === cat);
         });
         render();
@@ -375,10 +639,51 @@ const News = (() => {
         });
         const modal = document.getElementById('newsModal');
         if (modal) modal.dataset.world = world_tab;
+        if (world_tab === 'terra') {
+            ensureLocChipBar();
+            // kick off a fetch if needed
+            if (terraActiveSection !== 'tv' && terraActiveSection !== 'trending')
+                ensureTerraData(terraActiveSection, terraActiveLocation);
+            if (terraActiveSection === 'trending') ensureTrending();
+        }
         render();
+    }
+
+    function setSection(section) {
+        terraActiveSection = section;
+        if (section === 'wire' || section === 'frontline') ensureTerraData(section, terraActiveLocation);
+        if (section === 'trending') ensureTrending();
+        render();
+    }
+
+    function setLocation(locId) {
+        terraActiveLocation = locId;
+        if (terraActiveSection === 'wire' || terraActiveSection === 'frontline')
+            ensureTerraData(terraActiveSection, locId);
+        render();
+    }
+
+    function setTvChannel(chId) {
+        const ch = TV_CHANNELS.find(c => c.id === chId);
+        if (ch) { terraActiveChannel = ch; renderTv(); }
+    }
+
+    /* Build the country chip bar once; then only `syncTabsUI` updates the
+       active highlight. */
+    function ensureLocChipBar() {
+        const bar = document.getElementById('newsLocBar');
+        if (!bar || bar.childElementCount > 0) return;
+        for (const loc of TERRA_LOCATIONS) {
+            const b = document.createElement('button');
+            b.className = 'news-loc-chip';
+            b.dataset.loc = loc.id;
+            b.innerHTML = `<span>${loc.flag}</span> <span>${loc.name}</span>`;
+            b.addEventListener('click', () => setLocation(loc.id));
+            bar.appendChild(b);
+        }
     }
 
     function random(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-    return { init, tick, open, close, setTab, setWorld, render };
+    return { init, tick, open, close, setTab, setWorld, setSection, setLocation, setTvChannel, render };
 })();

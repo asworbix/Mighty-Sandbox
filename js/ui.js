@@ -137,8 +137,11 @@ const UI = (() => {
         if (newsModal) newsModal.addEventListener('click', e => {
             if (e.target === newsModal) newsModal.classList.add('hidden');
         });
-        document.querySelectorAll('.news-tab').forEach(b => {
+        document.querySelectorAll('.news-tab.gaia-tab').forEach(b => {
             b.addEventListener('click', () => News.setTab(b.dataset.cat));
+        });
+        document.querySelectorAll('.news-tab.terra-tab').forEach(b => {
+            b.addEventListener('click', () => News.setSection(b.dataset.section));
         });
         document.querySelectorAll('.news-world').forEach(b => {
             b.addEventListener('click', () => News.setWorld(b.dataset.world));
