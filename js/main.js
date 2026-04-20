@@ -71,6 +71,7 @@ const Main = (() => {
         UI.init(world);
         Ticker.init(world);
         News.init(world);
+        UI.initMode();   // default to Gaia (live)
 
         // dismiss boot
         bootEl('ready.', 100);

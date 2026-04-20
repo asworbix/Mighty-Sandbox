@@ -33,7 +33,33 @@ const Ticker = (() => {
 
     function refresh() {
         items = [];
-        // active events → headlines
+
+        // update label to reflect mode
+        const labelEl = document.getElementById('tickerLabel');
+        if (labelEl) {
+            labelEl.textContent = document.body.classList.contains('mode-gaia')
+                ? 'GAIA · LIVE' : 'HISTORY · SIM';
+        }
+
+        // GAIA mode: real headlines from GDELT (via News module's live cache).
+        if (document.body.classList.contains('mode-gaia') && typeof News !== 'undefined' && News.getLiveHeadlines) {
+            const live = News.getLiveHeadlines(25);
+            if (live && live.length) {
+                for (const h of live) {
+                    const flag = h.cid ? (flagEmoji(h.cid) + ' ') : '';
+                    const label = h.domain ? `<em>${escapeT(h.domain)}</em> — ` : '';
+                    items.push({ text: flag + label + escapeT(h.text), mood: /war|attack|strike|dead|killed|crisis|protest/i.test(h.text) ? 'warn' : 'info' });
+                }
+                render();
+                return;
+            }
+            // If live feed not ready yet, fall through to a minimal placeholder.
+            items.push({ text:'📡 tuning into the live wire…', mood:'info' });
+            render();
+            return;
+        }
+
+        // HISTORY mode: procedural sim-based ticker.
         for (const ev of Events.active) {
             items.push({ text: Narrator.headline(ev), mood: ev.mood });
         }
@@ -79,7 +105,16 @@ const Ticker = (() => {
 
     function tick(dt) {
         lastRefresh += dt;
-        if (lastRefresh > 10000) { lastRefresh = 0; refresh(); }
+        // In Gaia mode refresh ~every 60s (real headlines change slowly);
+        // in History mode keep the lively ~10s cadence.
+        const iv = document.body.classList.contains('mode-gaia') ? 60000 : 10000;
+        if (lastRefresh > iv) { lastRefresh = 0; refresh(); }
+    }
+
+    function escapeT(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
     }
 
     return { init, refresh, tick };

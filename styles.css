@@ -916,31 +916,32 @@ body {
 .mode-tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
 .mode-tab.active[data-mode="gaia"] {
     color: var(--bg);
-    background: var(--accent);
-    box-shadow: 0 0 14px rgba(0,231,255,0.3);
-}
-.mode-tab.active[data-mode="terra"] {
-    color: var(--bg);
     background: var(--accent-2);
     box-shadow: 0 0 14px rgba(122,162,255,0.3);
 }
+.mode-tab.active[data-mode="history"] {
+    color: var(--bg);
+    background: var(--gold);
+    box-shadow: 0 0 14px rgba(255,211,107,0.3);
+}
 .mode-tab.active .mode-sub { opacity: 0.8; color: var(--bg); }
 
-/* Terra mode: the interactive sandbox elements recede */
-body.mode-terra .prompt-wrap,
-body.mode-terra .timeline-wrap,
-body.mode-terra .quests,
-body.mode-terra .time-controls,
-body.mode-terra .layer-btn,
-body.mode-terra .layer-label,
-body.mode-terra .stats-pill {
+/* Gaia mode (live real Earth): the sandbox controls recede. */
+body.mode-gaia .prompt-wrap,
+body.mode-gaia .timeline-wrap,
+body.mode-gaia .quests,
+body.mode-gaia .time-controls,
+body.mode-gaia .layer-btn,
+body.mode-gaia .layer-label,
+body.mode-gaia .stats-pill,
+body.mode-gaia .log {
     display: none !important;
 }
-body.mode-terra .log { display: flex !important; }
-body.mode-terra .stats .panel-foot { display: none; }
+body.mode-gaia .stats .panel-foot { display: none; }
 
 /* a little colorway tint on the brand for each mode */
-body.mode-terra .brand-glyph { color: var(--accent-2); text-shadow: 0 0 12px var(--accent-2); }
+body.mode-gaia .brand-glyph { color: var(--accent-2); text-shadow: 0 0 12px var(--accent-2); }
+body.mode-history .brand-glyph { color: var(--gold); text-shadow: 0 0 12px var(--gold); }
 
 @media (max-width: 620px) {
     .mode-tab { padding: 6px 10px; font-size: 10px; letter-spacing: 0.16em; }

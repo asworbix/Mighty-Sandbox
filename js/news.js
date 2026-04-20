@@ -278,6 +278,11 @@ const News = (() => {
         } finally {
             e.loading = false;
             render();
+            // Poke the top ticker when the default world-wire finishes fetching
+            // so the headlines appear as soon as they land.
+            if (section === 'wire' && locId === 'world' && typeof Ticker !== 'undefined') {
+                try { Ticker.refresh(); } catch (_) {}
+            }
         }
     }
 
@@ -688,5 +693,14 @@ const News = (() => {
 
     function random(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-    return { init, tick, open, close, setTab, setWorld, setSection, setLocation, setTvChannel, render };
+    /* Live headlines (GDELT wire for the world view) — used by the top ticker
+       when the site is in Gaia (live) mode. Returns up to N items, most
+       recent first. Falls back to an empty list if nothing fetched yet. */
+    function getLiveHeadlines(n) {
+        const wire = terraCache.wire?.['world'];
+        if (!wire || !wire.items) return [];
+        return wire.items.slice(0, n || 20);
+    }
+
+    return { init, tick, open, close, setTab, setWorld, setSection, setLocation, setTvChannel, render, getLiveHeadlines };
 })();

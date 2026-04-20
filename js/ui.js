@@ -741,36 +741,45 @@ const UI = (() => {
         }
     }
 
-    /* Site-wide mode: 'gaia' (sandbox, default) or 'terra' (watch real Earth). */
+    /* Site-wide mode:
+         'gaia'    = LIVE real Earth (default): live news, real headlines.
+         'history' = sandbox: prompts, time travel, simulated events. */
     let previousSpeed = 1;
-    function setMode(mode) {
-        if (mode !== 'gaia' && mode !== 'terra') return;
+    function setMode(mode, opts = {}) {
+        if (mode !== 'gaia' && mode !== 'history') return;
         document.querySelectorAll('.mode-tab').forEach(t => {
             const on = t.dataset.mode === mode;
             t.classList.toggle('active', on);
             t.setAttribute('aria-selected', on ? 'true' : 'false');
         });
-        document.body.classList.toggle('mode-terra', mode === 'terra');
-        document.body.classList.toggle('mode-gaia',  mode === 'gaia');
-        if (mode === 'terra') {
+        document.body.classList.toggle('mode-gaia',    mode === 'gaia');
+        document.body.classList.toggle('mode-history', mode === 'history');
+        if (mode === 'gaia') {
             if (world.speed > 0) previousSpeed = world.speed;
             world.speed = 0;
             document.querySelectorAll('.tc').forEach(b => {
                 b.classList.toggle('active', parseInt(b.dataset.speed) === 0);
             });
-            // Open the Current modal on the Terra side; user sees live news
-            document.getElementById('newsModal')?.classList.remove('hidden');
-            News.setWorld('terra');
-            log('Switched to <b>Terra</b> — the real Earth, live.', 'info');
+            // Gaia is live — tune the news engine to real-world sources and start
+            // fetching so the ticker + feed populate even before user clicks 📡.
+            News.setWorld('terra'); // internal name kept: terra = live feed implementation
+            if (!opts.silent) {
+                document.getElementById('newsModal')?.classList.remove('hidden');
+                log('Welcome to <b>Gaia</b> — the real Earth, live.', 'info');
+            }
         } else {
             world.speed = previousSpeed || 1;
             document.querySelectorAll('.tc').forEach(b => {
                 b.classList.toggle('active', parseInt(b.dataset.speed) === world.speed);
             });
             document.getElementById('newsModal')?.classList.add('hidden');
-            log('Back to <b>Gaia</b> — shape the world.', 'good');
+            News.setWorld('gaia'); // internal: gaia = procedural sandbox feed
+            if (!opts.silent) log('Switched to <b>History</b> — shape any era you like.', 'good');
         }
+        Ticker.refresh();
     }
+    /* kick off Gaia (live) mode as the default on page load */
+    function initMode() { setMode('gaia', { silent: true }); }
 
     function boot(msg, progress) {
         if (el.bootStatus) el.bootStatus.textContent = msg;
@@ -780,6 +789,8 @@ const UI = (() => {
 
     return {
         init,
+        initMode,
+        setMode,
         updateStats,
         updateClock,
         log,
