@@ -43,6 +43,24 @@ const Main = (() => {
     function jitter(v) { return Math.max(0, Math.min(1, v + (Math.random() - 0.5) * 0.1)); }
 
     /* Bootstrap the whole app. */
+    /* Poll News.getLiveHeadlines() every 150ms, resolving once at least one
+       live item is available or the timeout fires — whichever comes first. */
+    function waitForLiveNews(timeoutMs) {
+        return new Promise(resolve => {
+            const started = performance.now();
+            const check = () => {
+                try {
+                    const h = (typeof News !== 'undefined' && News.getLiveHeadlines)
+                        ? News.getLiveHeadlines(1) : [];
+                    if (h && h.length) return resolve();
+                } catch (_) {}
+                if (performance.now() - started >= timeoutMs) return resolve();
+                setTimeout(check, 150);
+            };
+            check();
+        });
+    }
+
     async function start() {
         const bootEl = (msg, p) => {
             if (typeof UI !== 'undefined' && UI.boot) UI.boot(msg, p);
@@ -71,23 +89,27 @@ const Main = (() => {
         UI.init(world);
         Ticker.init(world);
         News.init(world);
-        UI.initMode();   // default to Gaia (live)
+        UI.initMode();   // default to Gaia (live) — kicks off the live wire fetch
+
+        // Hold the boot screen until the live headlines flow in (or ~8s timeout).
+        bootEl('tuning into the live wire…', 97);
+        await waitForLiveNews(8000);
 
         // dismiss boot
         bootEl('ready.', 100);
         setTimeout(() => {
             document.getElementById('boot').classList.add('fade');
-            setTimeout(() => document.getElementById('boot').remove(), 1200);
+            setTimeout(() => { const b = document.getElementById('boot'); if (b) b.remove(); }, 1200);
             document.getElementById('app').classList.remove('hidden');
-        }, 400);
+        }, 200);
 
         // game loop
         lastTime = performance.now();
         requestAnimationFrame(loop);
 
-        // initial log
-        UI.log('<b>Gaia is awake.</b> Speak into the prompt to shape the world.', 'good');
-        UI.log('Try <b>earthquake in Japan</b>, <b>travel to 1969</b>, or <b>festival in Rio</b>.', 'info');
+        // initial log (shown in History mode)
+        UI.log('<b>Gaia is awake.</b> Tap <b>History</b> up top to shape any era.', 'good');
+        UI.log('In Gaia mode you\'re looking at the real Earth — live.', 'info');
 
         // honor ?y=YEAR in the URL for shareable time-travel links
         try {

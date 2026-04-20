@@ -105,9 +105,9 @@ const Ticker = (() => {
 
     function tick(dt) {
         lastRefresh += dt;
-        // In Gaia mode refresh ~every 60s (real headlines change slowly);
-        // in History mode keep the lively ~10s cadence.
-        const iv = document.body.classList.contains('mode-gaia') ? 60000 : 10000;
+        // Faster refresh cadence for both modes. Gaia re-reads News live cache
+        // (no network cost); History regenerates its ambient mix.
+        const iv = document.body.classList.contains('mode-gaia') ? 15000 : 7000;
         if (lastRefresh > iv) { lastRefresh = 0; refresh(); }
     }
 
