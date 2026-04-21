@@ -1193,6 +1193,12 @@ body.mode-gaia #newsModal .modal-head .panel-btn { display: none; } /* no close 
     background: var(--accent-2);
     border-color: var(--accent-2);
 }
+.news-loc-empty {
+    color: var(--text-mute);
+    font-size: 11px;
+    font-style: italic;
+    padding: 6px 8px;
+}
 
 /* loading / error / empty */
 .news-loading, .news-error, .news-empty {

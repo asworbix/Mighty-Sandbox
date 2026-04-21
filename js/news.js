@@ -450,6 +450,12 @@ const News = (() => {
         // Swap visible tab/chip groups
         syncTabsUI();
 
+        // Rebuild the country chip bar when Terra wire/frontline is active, so
+        // search input changes filter the country list live.
+        if (world_tab === 'terra' && (terraActiveSection === 'wire' || terraActiveSection === 'frontline')) {
+            ensureLocChipBar();
+        }
+
         if (world_tab === 'terra' && terraActiveSection === 'tv') {
             renderTv();
             return;
@@ -676,18 +682,38 @@ const News = (() => {
         if (ch) { terraActiveChannel = ch; renderTv(); }
     }
 
-    /* Build the country chip bar once; then only `syncTabsUI` updates the
-       active highlight. */
+    /* Build the country chip bar with World first, the rest alphabetically.
+       When the user types into the search box we re-filter the chips so only
+       the matching countries remain visible — easy to isolate e.g. Denmark. */
     function ensureLocChipBar() {
         const bar = document.getElementById('newsLocBar');
-        if (!bar || bar.childElementCount > 0) return;
-        for (const loc of TERRA_LOCATIONS) {
+        if (!bar) return;
+        const q = (document.getElementById('newsSearch')?.value || '').trim().toLowerCase();
+        bar.innerHTML = '';
+        // World always first
+        const world = TERRA_LOCATIONS.find(l => l.id === 'world');
+        const rest  = TERRA_LOCATIONS.filter(l => l.id !== 'world')
+            .slice()
+            .sort((a, b) => a.name.localeCompare(b.name));
+        const ordered = world ? [world, ...rest] : rest;
+        const matches = ordered.filter(loc => !q || loc.name.toLowerCase().includes(q));
+        // If there's a query and only one match, auto-select it.
+        if (q && matches.length === 1 && matches[0].id !== terraActiveLocation) {
+            setLocation(matches[0].id);
+        }
+        for (const loc of matches) {
             const b = document.createElement('button');
-            b.className = 'news-loc-chip';
+            b.className = 'news-loc-chip' + (loc.id === terraActiveLocation ? ' active' : '');
             b.dataset.loc = loc.id;
-            b.innerHTML = `<span>${loc.flag}</span> <span>${loc.name}</span>`;
+            b.innerHTML = `<span>${loc.flag}</span> <span>${escapeHtml(loc.name)}</span>`;
             b.addEventListener('click', () => setLocation(loc.id));
             bar.appendChild(b);
+        }
+        if (matches.length === 0) {
+            const hint = document.createElement('span');
+            hint.className = 'news-loc-empty';
+            hint.textContent = 'no matching country';
+            bar.appendChild(hint);
         }
     }
 
