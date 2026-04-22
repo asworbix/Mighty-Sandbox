@@ -816,13 +816,15 @@ body {
     align-items: center;
     gap: 10px;
     height: 34px;
-    background: rgba(8, 10, 16, 0.6);
+    /* Solid-ish background — backdrop-filter would re-blur this area every
+       frame the map canvas paints underneath, which makes the scrolling
+       text look like it's tearing on desktops. */
+    background: rgba(8, 10, 16, 0.92);
     border: 1px solid rgba(255,255,255,0.05);
     border-radius: 999px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     overflow: hidden;
     pointer-events: none;
+    contain: layout paint;
 }
 .ticker-label {
     font-family: var(--mono);
@@ -967,8 +969,12 @@ body.mode-gaia #newsModal .modal-card {
     pointer-events: auto;
     width: 420px;
     max-height: calc(100vh - 160px);
+    background: rgba(10, 14, 20, 0.97);  /* solid to avoid per-frame re-blur */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border: 1px solid rgba(122,162,255,0.25);
     box-shadow: 0 16px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(122,162,255,0.08);
+    contain: layout paint;
 }
 body.mode-gaia #newsModal .modal-head .panel-btn { display: none; } /* no close in Gaia */
 

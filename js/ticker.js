@@ -105,9 +105,10 @@ const Ticker = (() => {
 
     function tick(dt) {
         lastRefresh += dt;
-        // Faster refresh cadence for both modes. Gaia re-reads News live cache
-        // (no network cost); History regenerates its ambient mix.
-        const iv = document.body.classList.contains('mode-gaia') ? 15000 : 7000;
+        // Bigger refresh gap so the CSS scroll animation completes a cycle
+        // before we swap the DOM (swapping mid-scroll causes a visible jump
+        // / tear). Gaia aligns with the 3-min GDELT cache; History stays snappy.
+        const iv = document.body.classList.contains('mode-gaia') ? 90000 : 18000;
         if (lastRefresh > iv) { lastRefresh = 0; refresh(); }
     }
 

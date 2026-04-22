@@ -125,6 +125,7 @@ const Main = (() => {
     let lastTime = 0;
     let statsTimer = 0;
     let ambientTimer = 0;
+    let lastRenderTime = 0;
     function loop(now) {
         const dt = Math.min(100, now - lastTime);
         lastTime = now;
@@ -153,8 +154,16 @@ const Main = (() => {
         // ambient drift: states slowly move toward era baseline
         if (simDt > 0) driftToBaseline(simDt);
 
-        // render
-        MapView.render(world);
+        // Render throttle: when the sim is paused (Gaia mode, or user-paused),
+        // nothing on the map is actually moving, so we can cap at ~12 FPS to
+        // free the compositor for the news panel / ticker. Active sim gets
+        // the full refresh rate.
+        const paused = world.speed === 0;
+        const minFrameMs = paused ? 80 : 16;
+        if (now - lastRenderTime >= minFrameMs) {
+            MapView.render(world);
+            lastRenderTime = now;
+        }
 
         // HUD updates at ~3 Hz
         statsTimer += dt;
