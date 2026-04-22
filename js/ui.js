@@ -289,11 +289,23 @@ const UI = (() => {
     /* ---------- Clock ---------- */
 
     function updateClock() {
-        // In Gaia (live) mode the clock shows actual real-world time; in
-        // History mode it shows the simulated clock (which can be paused or
-        // time-traveled).
         const isGaia = document.body.classList.contains('mode-gaia');
-        const d = isGaia ? new Date() : world.clock;
+        if (isGaia) {
+            // Gaia = LIVE. Use the user's actual local time & timezone.
+            const d = new Date();
+            const yearStr = d.getFullYear();
+            const dateStr = d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+            const timeStr = d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit', hour12:false });
+            const parts = new Intl.DateTimeFormat(undefined, { timeZoneName:'short' }).formatToParts(d);
+            const tz = parts.find(p => p.type === 'timeZoneName')?.value || '';
+            el.clockDate.textContent = yearStr + ' · ' + dateStr;
+            el.clockTime.textContent = timeStr + (tz ? ' ' + tz : '');
+            el.timelineYear.textContent = yearStr;
+            updateTimelineHandle();
+            return;
+        }
+        // History = simulated clock, in UTC (world time travel is UTC-anchored).
+        const d = world.clock;
         const yr = d.getUTCFullYear();
         const yearStr = yr < 0 ? Math.abs(yr) + ' BCE' : yr;
         const dateStr = new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', timeZone:'UTC' });

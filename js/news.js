@@ -128,72 +128,82 @@ const News = (() => {
     // Curated location chips — 'world' + a useful spread of nations.
     // `q` is the GDELT query string: source country (FIPS) OR mentions
     // of the country name + capital + major cities.
-    /* Country queries: prefer known national outlets (domain:…) and the
-       FIPS sourcecountry code. The `sourcelang:eng` restriction is dropped
-       for country feeds so that e.g. DR and Politiken (Danish) surface when
-       Denmark is selected. English-only stays on the global "World" feed. */
+    /* Country queries. Kept short — GDELT's DOC API becomes finicky past a
+       few hundred chars. 3-4 flagship outlets + sourcecountry FIPS is
+       enough to surface strong local coverage. `sourcelang` is intentionally
+       omitted so native-language articles (e.g. Danish DR) come through. */
     const TERRA_LOCATIONS = [
         { id:'world', name:'World', flag:'🌍', q:'sourcelang:eng' },
-        { id:'840', name:'United States',   flag:'🇺🇸', q:'(domain:nytimes.com OR domain:washingtonpost.com OR domain:cnn.com OR domain:foxnews.com OR domain:nbcnews.com OR domain:cbsnews.com OR domain:abcnews.go.com OR domain:apnews.com OR domain:reuters.com OR domain:wsj.com OR domain:npr.org OR sourcecountry:US)' },
-        { id:'826', name:'United Kingdom',  flag:'🇬🇧', q:'(domain:bbc.co.uk OR domain:bbc.com OR domain:theguardian.com OR domain:thetimes.co.uk OR domain:telegraph.co.uk OR domain:independent.co.uk OR domain:ft.com OR domain:dailymail.co.uk OR domain:sky.com OR domain:itv.com OR sourcecountry:UK)' },
-        { id:'276', name:'Germany',         flag:'🇩🇪', q:'(domain:spiegel.de OR domain:tagesschau.de OR domain:zeit.de OR domain:sueddeutsche.de OR domain:faz.net OR domain:welt.de OR domain:bild.de OR domain:dw.com OR sourcecountry:GM)' },
-        { id:'250', name:'France',          flag:'🇫🇷', q:'(domain:lemonde.fr OR domain:lefigaro.fr OR domain:liberation.fr OR domain:lesechos.fr OR domain:france24.com OR domain:francetvinfo.fr OR domain:rfi.fr OR domain:leparisien.fr OR sourcecountry:FR)' },
-        { id:'380', name:'Italy',           flag:'🇮🇹', q:'(domain:corriere.it OR domain:repubblica.it OR domain:ansa.it OR domain:rai.it OR domain:ilsole24ore.com OR domain:lastampa.it OR sourcecountry:IT)' },
-        { id:'724', name:'Spain',           flag:'🇪🇸', q:'(domain:elpais.com OR domain:elmundo.es OR domain:abc.es OR domain:lavanguardia.com OR domain:rtve.es OR domain:20minutos.es OR sourcecountry:SP)' },
-        { id:'620', name:'Portugal',        flag:'🇵🇹', q:'(domain:publico.pt OR domain:expresso.pt OR domain:rtp.pt OR domain:observador.pt OR domain:sic.pt OR sourcecountry:PO)' },
-        { id:'528', name:'Netherlands',     flag:'🇳🇱', q:'(domain:nos.nl OR domain:nrc.nl OR domain:volkskrant.nl OR domain:telegraaf.nl OR domain:ad.nl OR domain:dutchnews.nl OR sourcecountry:NL)' },
-        { id:'056', name:'Belgium',         flag:'🇧🇪', q:'(domain:vrt.be OR domain:standaard.be OR domain:hln.be OR domain:lesoir.be OR domain:rtbf.be OR domain:brusselstimes.com OR sourcecountry:BE)' },
-        { id:'756', name:'Switzerland',     flag:'🇨🇭', q:'(domain:srf.ch OR domain:nzz.ch OR domain:tagesanzeiger.ch OR domain:swissinfo.ch OR domain:rts.ch OR domain:blick.ch OR sourcecountry:SZ)' },
-        { id:'040', name:'Austria',         flag:'🇦🇹', q:'(domain:orf.at OR domain:derstandard.at OR domain:diepresse.com OR domain:kurier.at OR domain:krone.at OR sourcecountry:AU)' },
-        { id:'372', name:'Ireland',         flag:'🇮🇪', q:'(domain:rte.ie OR domain:irishtimes.com OR domain:independent.ie OR domain:thejournal.ie OR sourcecountry:EI)' },
-        { id:'208', name:'Denmark',         flag:'🇩🇰', q:'(domain:dr.dk OR domain:tv2.dk OR domain:politiken.dk OR domain:berlingske.dk OR domain:jyllands-posten.dk OR domain:b.dk OR domain:information.dk OR domain:finans.dk OR domain:bt.dk OR domain:ekstrabladet.dk OR domain:cphpost.dk OR sourcecountry:DA)' },
-        { id:'578', name:'Norway',          flag:'🇳🇴', q:'(domain:nrk.no OR domain:vg.no OR domain:aftenposten.no OR domain:tv2.no OR domain:dagbladet.no OR domain:dn.no OR domain:nettavisen.no OR sourcecountry:NO)' },
-        { id:'752', name:'Sweden',          flag:'🇸🇪', q:'(domain:svt.se OR domain:dn.se OR domain:aftonbladet.se OR domain:expressen.se OR domain:sr.se OR domain:svd.se OR domain:tv4.se OR sourcecountry:SW)' },
-        { id:'246', name:'Finland',         flag:'🇫🇮', q:'(domain:yle.fi OR domain:hs.fi OR domain:iltalehti.fi OR domain:is.fi OR domain:mtv.fi OR sourcecountry:FI)' },
-        { id:'352', name:'Iceland',         flag:'🇮🇸', q:'(domain:ruv.is OR domain:mbl.is OR domain:visir.is OR domain:kjarninn.is OR sourcecountry:IC OR Iceland OR Reykjavik)' },
-        { id:'616', name:'Poland',          flag:'🇵🇱', q:'(domain:tvn24.pl OR domain:onet.pl OR domain:wp.pl OR domain:gazeta.pl OR domain:rp.pl OR domain:polsatnews.pl OR sourcecountry:PL)' },
-        { id:'203', name:'Czechia',         flag:'🇨🇿', q:'(domain:ct24.ceskatelevize.cz OR domain:idnes.cz OR domain:novinky.cz OR domain:lidovky.cz OR domain:seznamzpravy.cz OR sourcecountry:EZ)' },
-        { id:'348', name:'Hungary',         flag:'🇭🇺', q:'(domain:index.hu OR domain:telex.hu OR domain:24.hu OR domain:mno.hu OR sourcecountry:HU)' },
-        { id:'300', name:'Greece',          flag:'🇬🇷', q:'(domain:kathimerini.gr OR domain:ekathimerini.com OR domain:naftemporiki.gr OR domain:tovima.gr OR domain:ert.gr OR sourcecountry:GR)' },
-        { id:'792', name:'Turkey',          flag:'🇹🇷', q:'(domain:hurriyetdailynews.com OR domain:dailysabah.com OR domain:anadoluajansi.com.tr OR domain:trtworld.com OR domain:cumhuriyet.com.tr OR domain:sozcu.com.tr OR sourcecountry:TU)' },
-        { id:'643', name:'Russia',          flag:'🇷🇺', q:'(domain:tass.com OR domain:ria.ru OR domain:rbc.ru OR domain:kommersant.ru OR domain:meduza.io OR domain:rt.com OR sourcecountry:RS)' },
-        { id:'804', name:'Ukraine',         flag:'🇺🇦', q:'(domain:ukrinform.net OR domain:pravda.com.ua OR domain:unian.net OR domain:kyivindependent.com OR domain:kyivpost.com OR domain:suspilne.media OR sourcecountry:UP)' },
-        { id:'124', name:'Canada',          flag:'🇨🇦', q:'(domain:cbc.ca OR domain:ctvnews.ca OR domain:globalnews.ca OR domain:theglobeandmail.com OR domain:nationalpost.com OR domain:torontostar.com OR sourcecountry:CA)' },
-        { id:'484', name:'Mexico',          flag:'🇲🇽', q:'(domain:eluniversal.com.mx OR domain:milenio.com OR domain:jornada.com.mx OR domain:excelsior.com.mx OR domain:reforma.com OR sourcecountry:MX)' },
-        { id:'076', name:'Brazil',          flag:'🇧🇷', q:'(domain:globo.com OR domain:folha.uol.com.br OR domain:estadao.com.br OR domain:uol.com.br OR domain:cnnbrasil.com.br OR domain:bandnewstv.com.br OR sourcecountry:BR)' },
-        { id:'032', name:'Argentina',       flag:'🇦🇷', q:'(domain:clarin.com OR domain:lanacion.com.ar OR domain:infobae.com OR domain:pagina12.com.ar OR domain:tn.com.ar OR sourcecountry:AR)' },
-        { id:'152', name:'Chile',           flag:'🇨🇱', q:'(domain:latercera.com OR domain:emol.com OR domain:24horas.cl OR domain:biobiochile.cl OR sourcecountry:CI)' },
-        { id:'170', name:'Colombia',        flag:'🇨🇴', q:'(domain:eltiempo.com OR domain:semana.com OR domain:elespectador.com OR domain:caracol.com.co OR sourcecountry:CO)' },
-        { id:'604', name:'Peru',            flag:'🇵🇪', q:'(domain:elcomercio.pe OR domain:larepublica.pe OR domain:rpp.pe OR sourcecountry:PE)' },
-        { id:'862', name:'Venezuela',       flag:'🇻🇪', q:'(domain:el-nacional.com OR domain:eluniversal.com OR domain:globovision.com OR domain:telesurtv.net OR sourcecountry:VE)' },
-        { id:'156', name:'China',           flag:'🇨🇳', q:'(domain:xinhuanet.com OR domain:people.com.cn OR domain:chinadaily.com.cn OR domain:scmp.com OR domain:cgtn.com OR domain:globaltimes.cn OR sourcecountry:CH)' },
-        { id:'392', name:'Japan',           flag:'🇯🇵', q:'(domain:nhk.or.jp OR domain:asahi.com OR domain:yomiuri.co.jp OR domain:mainichi.jp OR domain:nikkei.com OR domain:japantimes.co.jp OR domain:japantoday.com OR sourcecountry:JA)' },
-        { id:'410', name:'South Korea',     flag:'🇰🇷', q:'(domain:koreaherald.com OR domain:koreatimes.co.kr OR domain:yna.co.kr OR domain:chosun.com OR domain:hani.co.kr OR sourcecountry:KS)' },
-        { id:'408', name:'North Korea',     flag:'🇰🇵', q:'("North Korea" OR Pyongyang OR "Kim Jong")' },
-        { id:'158', name:'Taiwan',          flag:'🇹🇼', q:'(domain:taipeitimes.com OR domain:focustaiwan.tw OR domain:taiwannews.com.tw OR domain:chinatimes.com OR sourcecountry:TW)' },
-        { id:'356', name:'India',           flag:'🇮🇳', q:'(domain:ndtv.com OR domain:timesofindia.indiatimes.com OR domain:thehindu.com OR domain:hindustantimes.com OR domain:indianexpress.com OR domain:deccanherald.com OR domain:livemint.com OR sourcecountry:IN)' },
-        { id:'586', name:'Pakistan',        flag:'🇵🇰', q:'(domain:dawn.com OR domain:geo.tv OR domain:thenews.com.pk OR domain:tribune.com.pk OR sourcecountry:PK)' },
-        { id:'050', name:'Bangladesh',      flag:'🇧🇩', q:'(domain:thedailystar.net OR domain:prothomalo.com OR domain:bdnews24.com OR sourcecountry:BG)' },
-        { id:'360', name:'Indonesia',       flag:'🇮🇩', q:'(domain:kompas.com OR domain:detik.com OR domain:tempo.co OR domain:jakartapost.com OR domain:antaranews.com OR sourcecountry:ID)' },
-        { id:'608', name:'Philippines',     flag:'🇵🇭', q:'(domain:inquirer.net OR domain:rappler.com OR domain:gmanetwork.com OR domain:philstar.com OR domain:abs-cbn.com OR sourcecountry:RP)' },
-        { id:'764', name:'Thailand',        flag:'🇹🇭', q:'(domain:bangkokpost.com OR domain:nationthailand.com OR domain:thairath.co.th OR sourcecountry:TH)' },
-        { id:'704', name:'Vietnam',         flag:'🇻🇳', q:'(domain:vnexpress.net OR domain:tuoitre.vn OR domain:thanhnien.vn OR domain:vietnamnews.vn OR sourcecountry:VM)' },
-        { id:'458', name:'Malaysia',        flag:'🇲🇾', q:'(domain:thestar.com.my OR domain:nst.com.my OR domain:malaymail.com OR domain:freemalaysiatoday.com OR sourcecountry:MY)' },
-        { id:'702', name:'Singapore',       flag:'🇸🇬', q:'(domain:straitstimes.com OR domain:channelnewsasia.com OR domain:todayonline.com OR sourcecountry:SN)' },
-        { id:'036', name:'Australia',       flag:'🇦🇺', q:'(domain:abc.net.au OR domain:smh.com.au OR domain:theage.com.au OR domain:theaustralian.com.au OR domain:news.com.au OR domain:9news.com.au OR sourcecountry:AS)' },
-        { id:'554', name:'New Zealand',     flag:'🇳🇿', q:'(domain:rnz.co.nz OR domain:stuff.co.nz OR domain:nzherald.co.nz OR domain:1news.co.nz OR sourcecountry:NZ)' },
-        { id:'818', name:'Egypt',           flag:'🇪🇬', q:'(domain:ahram.org.eg OR domain:egyptindependent.com OR domain:english.ahram.org.eg OR sourcecountry:EG)' },
-        { id:'682', name:'Saudi Arabia',    flag:'🇸🇦', q:'(domain:arabnews.com OR domain:saudigazette.com.sa OR domain:alarabiya.net OR sourcecountry:SA)' },
-        { id:'784', name:'UAE',             flag:'🇦🇪', q:'(domain:thenationalnews.com OR domain:gulfnews.com OR domain:khaleejtimes.com OR sourcecountry:AE)' },
-        { id:'376', name:'Israel',          flag:'🇮🇱', q:'(domain:haaretz.com OR domain:timesofisrael.com OR domain:jpost.com OR domain:ynetnews.com OR domain:i24news.tv OR sourcecountry:IS)' },
-        { id:'364', name:'Iran',            flag:'🇮🇷', q:'(domain:presstv.ir OR domain:tehrantimes.com OR domain:irna.ir OR sourcecountry:IR)' },
-        { id:'368', name:'Iraq',            flag:'🇮🇶', q:'(domain:rudaw.net OR domain:iraqinews.com OR sourcecountry:IZ OR Iraq OR Baghdad)' },
-        { id:'710', name:'South Africa',    flag:'🇿🇦', q:'(domain:news24.com OR domain:iol.co.za OR domain:dailymaverick.co.za OR domain:mg.co.za OR domain:enca.com OR sourcecountry:SF)' },
-        { id:'566', name:'Nigeria',         flag:'🇳🇬', q:'(domain:vanguardngr.com OR domain:punchng.com OR domain:premiumtimesng.com OR domain:channelstv.com OR domain:thisdaylive.com OR sourcecountry:NI)' },
-        { id:'404', name:'Kenya',           flag:'🇰🇪', q:'(domain:nation.africa OR domain:standardmedia.co.ke OR domain:the-star.co.ke OR domain:capitalfm.co.ke OR sourcecountry:KE)' },
-        { id:'231', name:'Ethiopia',        flag:'🇪🇹', q:'(domain:addisstandard.com OR domain:ena.et OR domain:fanabc.com OR sourcecountry:ET OR Ethiopia OR "Addis Ababa")' },
-        { id:'504', name:'Morocco',         flag:'🇲🇦', q:'(domain:lematin.ma OR domain:yabiladi.com OR domain:moroccoworldnews.com OR domain:moroccotodaynews.ma OR sourcecountry:MO)' },
+        { id:'840', name:'United States',   flag:'🇺🇸', fips:'US', domains:['nytimes.com','washingtonpost.com','cnn.com','apnews.com','reuters.com'] },
+        { id:'826', name:'United Kingdom',  flag:'🇬🇧', fips:'UK', domains:['bbc.co.uk','theguardian.com','thetimes.co.uk','telegraph.co.uk','ft.com'] },
+        { id:'276', name:'Germany',         flag:'🇩🇪', fips:'GM', domains:['spiegel.de','tagesschau.de','zeit.de','dw.com'] },
+        { id:'250', name:'France',          flag:'🇫🇷', fips:'FR', domains:['lemonde.fr','lefigaro.fr','france24.com','francetvinfo.fr'] },
+        { id:'380', name:'Italy',           flag:'🇮🇹', fips:'IT', domains:['corriere.it','repubblica.it','ansa.it','rai.it'] },
+        { id:'724', name:'Spain',           flag:'🇪🇸', fips:'SP', domains:['elpais.com','elmundo.es','rtve.es','lavanguardia.com'] },
+        { id:'620', name:'Portugal',        flag:'🇵🇹', fips:'PO', domains:['publico.pt','rtp.pt','expresso.pt'] },
+        { id:'528', name:'Netherlands',     flag:'🇳🇱', fips:'NL', domains:['nos.nl','nrc.nl','volkskrant.nl','dutchnews.nl'] },
+        { id:'056', name:'Belgium',         flag:'🇧🇪', fips:'BE', domains:['vrt.be','rtbf.be','brusselstimes.com'] },
+        { id:'756', name:'Switzerland',     flag:'🇨🇭', fips:'SZ', domains:['srf.ch','nzz.ch','swissinfo.ch'] },
+        { id:'040', name:'Austria',         flag:'🇦🇹', fips:'AU', domains:['orf.at','derstandard.at','diepresse.com'] },
+        { id:'372', name:'Ireland',         flag:'🇮🇪', fips:'EI', domains:['rte.ie','irishtimes.com','thejournal.ie'] },
+        { id:'208', name:'Denmark',         flag:'🇩🇰', fips:'DA', domains:['dr.dk','tv2.dk','politiken.dk','berlingske.dk','jyllands-posten.dk','cphpost.dk'] },
+        { id:'578', name:'Norway',          flag:'🇳🇴', fips:'NO', domains:['nrk.no','vg.no','aftenposten.no','tv2.no'] },
+        { id:'752', name:'Sweden',          flag:'🇸🇪', fips:'SW', domains:['svt.se','dn.se','aftonbladet.se','expressen.se'] },
+        { id:'246', name:'Finland',         flag:'🇫🇮', fips:'FI', domains:['yle.fi','hs.fi','is.fi'] },
+        { id:'352', name:'Iceland',         flag:'🇮🇸', fips:'IC', domains:['ruv.is','mbl.is','visir.is'] },
+        { id:'616', name:'Poland',          flag:'🇵🇱', fips:'PL', domains:['tvn24.pl','onet.pl','wp.pl','rp.pl'] },
+        { id:'203', name:'Czechia',         flag:'🇨🇿', fips:'EZ', domains:['idnes.cz','novinky.cz','seznamzpravy.cz'] },
+        { id:'348', name:'Hungary',         flag:'🇭🇺', fips:'HU', domains:['index.hu','telex.hu','24.hu'] },
+        { id:'300', name:'Greece',          flag:'🇬🇷', fips:'GR', domains:['kathimerini.gr','ekathimerini.com','ert.gr'] },
+        { id:'792', name:'Turkey',          flag:'🇹🇷', fips:'TU', domains:['hurriyetdailynews.com','dailysabah.com','trtworld.com'] },
+        { id:'643', name:'Russia',          flag:'🇷🇺', fips:'RS', domains:['tass.com','ria.ru','meduza.io','rt.com'] },
+        { id:'804', name:'Ukraine',         flag:'🇺🇦', fips:'UP', domains:['ukrinform.net','pravda.com.ua','kyivindependent.com','suspilne.media'] },
+        { id:'124', name:'Canada',          flag:'🇨🇦', fips:'CA', domains:['cbc.ca','ctvnews.ca','globalnews.ca','theglobeandmail.com'] },
+        { id:'484', name:'Mexico',          flag:'🇲🇽', fips:'MX', domains:['eluniversal.com.mx','milenio.com','jornada.com.mx'] },
+        { id:'076', name:'Brazil',          flag:'🇧🇷', fips:'BR', domains:['globo.com','folha.uol.com.br','estadao.com.br','uol.com.br'] },
+        { id:'032', name:'Argentina',       flag:'🇦🇷', fips:'AR', domains:['clarin.com','lanacion.com.ar','infobae.com'] },
+        { id:'152', name:'Chile',           flag:'🇨🇱', fips:'CI', domains:['latercera.com','emol.com','biobiochile.cl'] },
+        { id:'170', name:'Colombia',        flag:'🇨🇴', fips:'CO', domains:['eltiempo.com','semana.com','elespectador.com'] },
+        { id:'604', name:'Peru',            flag:'🇵🇪', fips:'PE', domains:['elcomercio.pe','larepublica.pe'] },
+        { id:'862', name:'Venezuela',       flag:'🇻🇪', fips:'VE', domains:['el-nacional.com','telesurtv.net'] },
+        { id:'156', name:'China',           flag:'🇨🇳', fips:'CH', domains:['xinhuanet.com','chinadaily.com.cn','scmp.com','cgtn.com'] },
+        { id:'392', name:'Japan',           flag:'🇯🇵', fips:'JA', domains:['nhk.or.jp','asahi.com','japantimes.co.jp','nikkei.com'] },
+        { id:'410', name:'South Korea',     flag:'🇰🇷', fips:'KS', domains:['koreaherald.com','koreatimes.co.kr','yna.co.kr'] },
+        { id:'408', name:'North Korea',     flag:'🇰🇵', fips:null, domains:[], q:'("North Korea" OR Pyongyang OR "Kim Jong")' },
+        { id:'158', name:'Taiwan',          flag:'🇹🇼', fips:'TW', domains:['taipeitimes.com','focustaiwan.tw','taiwannews.com.tw'] },
+        { id:'356', name:'India',           flag:'🇮🇳', fips:'IN', domains:['ndtv.com','thehindu.com','hindustantimes.com','indianexpress.com'] },
+        { id:'586', name:'Pakistan',        flag:'🇵🇰', fips:'PK', domains:['dawn.com','geo.tv','tribune.com.pk'] },
+        { id:'050', name:'Bangladesh',      flag:'🇧🇩', fips:'BG', domains:['thedailystar.net','prothomalo.com','bdnews24.com'] },
+        { id:'360', name:'Indonesia',       flag:'🇮🇩', fips:'ID', domains:['kompas.com','detik.com','tempo.co','jakartapost.com'] },
+        { id:'608', name:'Philippines',     flag:'🇵🇭', fips:'RP', domains:['inquirer.net','rappler.com','gmanetwork.com'] },
+        { id:'764', name:'Thailand',        flag:'🇹🇭', fips:'TH', domains:['bangkokpost.com','nationthailand.com'] },
+        { id:'704', name:'Vietnam',         flag:'🇻🇳', fips:'VM', domains:['vnexpress.net','vietnamnews.vn'] },
+        { id:'458', name:'Malaysia',        flag:'🇲🇾', fips:'MY', domains:['thestar.com.my','malaymail.com','freemalaysiatoday.com'] },
+        { id:'702', name:'Singapore',       flag:'🇸🇬', fips:'SN', domains:['straitstimes.com','channelnewsasia.com','todayonline.com'] },
+        { id:'036', name:'Australia',       flag:'🇦🇺', fips:'AS', domains:['abc.net.au','smh.com.au','theage.com.au','news.com.au'] },
+        { id:'554', name:'New Zealand',     flag:'🇳🇿', fips:'NZ', domains:['rnz.co.nz','stuff.co.nz','nzherald.co.nz'] },
+        { id:'818', name:'Egypt',           flag:'🇪🇬', fips:'EG', domains:['ahram.org.eg','egyptindependent.com'] },
+        { id:'682', name:'Saudi Arabia',    flag:'🇸🇦', fips:'SA', domains:['arabnews.com','saudigazette.com.sa','alarabiya.net'] },
+        { id:'784', name:'UAE',             flag:'🇦🇪', fips:'AE', domains:['thenationalnews.com','gulfnews.com','khaleejtimes.com'] },
+        { id:'376', name:'Israel',          flag:'🇮🇱', fips:'IS', domains:['haaretz.com','timesofisrael.com','jpost.com','ynetnews.com'] },
+        { id:'364', name:'Iran',            flag:'🇮🇷', fips:'IR', domains:['presstv.ir','tehrantimes.com'] },
+        { id:'368', name:'Iraq',            flag:'🇮🇶', fips:'IZ', domains:['rudaw.net'] },
+        { id:'710', name:'South Africa',    flag:'🇿🇦', fips:'SF', domains:['news24.com','iol.co.za','dailymaverick.co.za','mg.co.za'] },
+        { id:'566', name:'Nigeria',         flag:'🇳🇬', fips:'NI', domains:['vanguardngr.com','punchng.com','premiumtimesng.com'] },
+        { id:'404', name:'Kenya',           flag:'🇰🇪', fips:'KE', domains:['nation.africa','standardmedia.co.ke','the-star.co.ke'] },
+        { id:'231', name:'Ethiopia',        flag:'🇪🇹', fips:'ET', domains:['addisstandard.com','ena.et'] },
+        { id:'504', name:'Morocco',         flag:'🇲🇦', fips:'MO', domains:['moroccoworldnews.com','yabiladi.com'] },
     ];
+
+    /* Build a compact GDELT query from a location config. If `q` is set,
+       use it directly. Otherwise OR together 3-4 domains and sourcecountry. */
+    function locationQuery(loc) {
+        if (loc.q) return loc.q;
+        const parts = [];
+        (loc.domains || []).forEach(d => parts.push('domain:' + d));
+        if (loc.fips) parts.push('sourcecountry:' + loc.fips);
+        return '(' + parts.join(' OR ') + ')';
+    }
 
     // Real 24/7 live news channels on YouTube.
     const TV_CHANNELS = [
@@ -272,10 +282,18 @@ const News = (() => {
         render();
         try {
             const loc = TERRA_LOCATIONS.find(l => l.id === locId) || TERRA_LOCATIONS[0];
-            const q = section === 'frontline'
-                ? conflictQuery(loc)
-                : loc.q;
-            e.items = await fetchGdelt(q);
+            const q = section === 'frontline' ? conflictQuery(loc) : locationQuery(loc);
+            let items = [];
+            try {
+                items = await fetchGdelt(q);
+            } catch (errPrimary) {
+                // Query failed — fall back to the simplest possible form:
+                // just sourcecountry for country feeds, or sourcelang:eng globally.
+                const fallback = loc.fips ? `sourcecountry:${loc.fips}` : 'sourcelang:eng';
+                console.warn('GDELT primary failed, retrying simpler query:', errPrimary?.message);
+                items = await fetchGdelt(fallback);
+            }
+            e.items = items;
             e.fetchedAt = now;
         } catch (err) {
             e.error = err.message || 'offline';
@@ -315,10 +333,11 @@ const News = (() => {
     }
 
     function conflictQuery(loc) {
-        const conflict = '(war OR conflict OR military OR strike OR attack OR ceasefire OR offensive OR missile OR drone OR invasion OR troops OR siege OR sanction)';
-        const base = (loc.q || '').replace(/\s*sourcelang:eng\s*$/, '').trim();
+        const conflict = '(war OR conflict OR military OR strike OR ceasefire OR missile OR invasion OR troops)';
+        if (loc.id === 'world') return `${conflict} sourcelang:eng`;
+        const base = locationQuery(loc).replace(/\s*sourcelang:eng\s*$/, '').trim();
         if (!base) return `${conflict} sourcelang:eng`;
-        return `${base} ${conflict} sourcelang:eng`;
+        return `${base} ${conflict}`;
     }
 
     function decodeHtml(s) {
