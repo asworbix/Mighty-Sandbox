@@ -133,7 +133,7 @@ const News = (() => {
        enough to surface strong local coverage. `sourcelang` is intentionally
        omitted so native-language articles (e.g. Danish DR) come through. */
     const TERRA_LOCATIONS = [
-        { id:'world', name:'World', flag:'🌍', q:'sourcelang:eng' },
+        { id:'world', name:'World', flag:'🌍', q:'(domain:reuters.com OR domain:apnews.com OR domain:bbc.com OR domain:aljazeera.com OR domain:theguardian.com OR domain:france24.com OR domain:dw.com OR domain:npr.org)' },
         { id:'840', name:'United States',   flag:'🇺🇸', fips:'US', domains:['nytimes.com','washingtonpost.com','cnn.com','apnews.com','reuters.com'] },
         { id:'826', name:'United Kingdom',  flag:'🇬🇧', fips:'UK', domains:['bbc.co.uk','theguardian.com','thetimes.co.uk','telegraph.co.uk','ft.com'] },
         { id:'276', name:'Germany',         flag:'🇩🇪', fips:'GM', domains:['spiegel.de','tagesschau.de','zeit.de','dw.com'] },

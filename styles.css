@@ -816,15 +816,11 @@ body {
     align-items: center;
     gap: 10px;
     height: 34px;
-    /* Solid-ish background — backdrop-filter would re-blur this area every
-       frame the map canvas paints underneath, which makes the scrolling
-       text look like it's tearing on desktops. */
     background: rgba(8, 10, 16, 0.92);
     border: 1px solid rgba(255,255,255,0.05);
     border-radius: 999px;
     overflow: hidden;
     pointer-events: none;
-    contain: layout paint;
 }
 .ticker-label {
     font-family: var(--mono);

@@ -105,10 +105,16 @@ const Ticker = (() => {
 
     function tick(dt) {
         lastRefresh += dt;
-        // Bigger refresh gap so the CSS scroll animation completes a cycle
-        // before we swap the DOM (swapping mid-scroll causes a visible jump
-        // / tear). Gaia aligns with the 3-min GDELT cache; History stays snappy.
-        const iv = document.body.classList.contains('mode-gaia') ? 90000 : 18000;
+        // If the ticker is currently showing the "tuning…" placeholder (no
+        // real items yet), poll every 1s so we pick up the GDELT fetch the
+        // moment it lands. Once we have real items, relax to 90s (Gaia) or
+        // 18s (History) so the CSS scroll animation completes a cycle
+        // between DOM rebuilds instead of jumping.
+        const hasReal = items.length > 0 && items[0].text && !items[0].text.includes('tuning into');
+        let iv;
+        if (!hasReal) iv = 1000;
+        else if (document.body.classList.contains('mode-gaia')) iv = 90000;
+        else iv = 18000;
         if (lastRefresh > iv) { lastRefresh = 0; refresh(); }
     }
 
