@@ -42,6 +42,10 @@ const MapView = (() => {
     /* Throttle hover hit-testing to once per animation frame. */
     let pendingHoverEvent = null;
     let hoverScheduled = false;
+    /* renderDirty: flipped true whenever the camera, a country fill, or
+       hover state changes — lets main.js skip render frames while the
+       scene is static. */
+    let renderDirty = true;
 
     async function init(world) {
         canvas = document.getElementById('earth');
@@ -195,9 +199,11 @@ const MapView = (() => {
         updateProjection();
     }
 
+    let activeDpr = 1;
     function resize() {
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
+        activeDpr = dpr;
         width = window.innerWidth;
         height = window.innerHeight;
         [canvas, fx].forEach(c => {
@@ -237,6 +243,7 @@ const MapView = (() => {
         }
         path = d3.geoPath(projection, ctx);
         cachedPaths.dirty = true;
+        renderDirty = true;
     }
 
     /* Build Path2D objects for sphere, graticule, land, and every country.
@@ -337,13 +344,21 @@ const MapView = (() => {
         pendingHoverEvent = null;
         if (!e) return;
         if (cachedPaths.dirty) rebuildPaths();
+        // isPointInPath tests against the TRANSFORMED path coords. Since we
+        // set ctx.setTransform(dpr, 0, 0, dpr, 0, 0) on resize, we must scale
+        // the mouse (CSS) coordinates by dpr to match the path's transformed
+        // position. Without this the hit test was offset by ~2x on HiDPI
+        // screens — mouse over Africa returned USA, etc.
+        const hx = e.x * activeDpr;
+        const hy = e.y * activeDpr;
         let found = null;
         for (const cp of cachedPaths.countries) {
-            if (ctx.isPointInPath(cp.p2d, e.x, e.y)) { found = cp.feature; break; }
+            if (ctx.isPointInPath(cp.p2d, hx, hy)) { found = cp.feature; break; }
         }
         const newId = found ? found.idStr : null;
         if (newId !== hoverId) {
             hoverId = newId;
+            renderDirty = true; // hover highlights a country → repaint needed
             if (onHoverHandler) onHoverHandler(hoverId, e);
         } else if (onHoverHandler && hoverId) {
             onHoverHandler(hoverId, e); // still fire so tooltip follows cursor
@@ -486,6 +501,7 @@ const MapView = (() => {
     /* Public — call when any country state changes (UI does this every ~330ms). */
     function invalidateFills() {
         for (const k in countryFillCache) delete countryFillCache[k];
+        renderDirty = true;
     }
 
     /* darken pixels that are on the night side via a radial overlay */
@@ -634,13 +650,22 @@ const MapView = (() => {
         return dataLayer;
     }
 
+    /* Atomic read+clear of the dirty flag. main.js's loop calls this each
+       frame to decide whether to actually paint. */
+    function consumeRenderDirty() {
+        const d = renderDirty || autoRotate;
+        renderDirty = false;
+        return d;
+    }
+
     return {
         init, render,
         zoomTo, resetView,
         toggleMode,
         cycleLayer,
         invalidateFills,
-        setAutoRotate(v) { autoRotate = !!v; },
+        consumeRenderDirty,
+        setAutoRotate(v) { autoRotate = !!v; renderDirty = true; },
         onClick: onClick2, onHover,
         setClicked,
         countryAt,

@@ -154,13 +154,14 @@ const Main = (() => {
         // ambient drift: states slowly move toward era baseline
         if (simDt > 0) driftToBaseline(simDt);
 
-        // Render throttle: when the sim is paused (Gaia mode, or user-paused),
-        // nothing on the map is actually moving, so we can cap at ~12 FPS to
-        // free the compositor for the news panel / ticker. Active sim gets
-        // the full refresh rate.
+        // Smart render: paint only when something actually changed (camera
+        // moved, hover changed, country fill changed, or sim advanced). When
+        // paused AND nothing dirty, we coast entirely — no canvas paints,
+        // no compositor work. Big perf win for the live Gaia view.
+        const dirty = MapView.consumeRenderDirty();
         const paused = world.speed === 0;
-        const minFrameMs = paused ? 80 : 16;
-        if (now - lastRenderTime >= minFrameMs) {
+        const needsPaint = dirty || !paused || (now - lastRenderTime >= 500);
+        if (needsPaint) {
             MapView.render(world);
             lastRenderTime = now;
         }
