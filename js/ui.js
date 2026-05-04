@@ -34,73 +34,8 @@ const UI = (() => {
         ].forEach(id => el[id] = $(id));
 
         // mobile stats pill ⇄ expanded stats panel
-        if (el.statsPill) {
-            el.statsPill.addEventListener('click', () => {
-                el.statsPanel.classList.add('expanded');
-                el.statsPill.classList.add('hidden');
-            });
-        }
-        if (el.statsPanel) {
-            el.statsPanel.addEventListener('click', (e) => {
-                // tap the panel header or outside its interactive content to collapse (mobile only)
-                if (window.matchMedia('(max-width: 620px)').matches) {
-                    el.statsPanel.classList.remove('expanded');
-                    el.statsPill.classList.remove('hidden');
-                }
-            });
-        }
-        // auto-collapse when rotating to desktop size
-        window.addEventListener('resize', () => {
-            if (!window.matchMedia('(max-width: 620px)').matches) {
-                el.statsPanel.classList.remove('expanded');
-                if (el.statsPill) el.statsPill.classList.remove('hidden');
-            }
-        });
-
-        // time controls
-        document.querySelectorAll('.tc').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tc').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                world.speed = parseInt(btn.dataset.speed);
-                if (world.speed === 0) log('paused','info');
-            });
-        });
-
-        // prompt + history
-        const promptHistory = [];
-        let historyIndex = -1;
-        el.promptForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const v = el.promptInput.value.trim();
-            if (!v) return;
-            if (promptHistory[promptHistory.length - 1] !== v) {
-                promptHistory.push(v);
-                if (promptHistory.length > 40) promptHistory.shift();
-            }
-            historyIndex = promptHistory.length;
-            Main.handlePrompt(v);
-            el.promptInput.value = '';
-        });
-        el.promptInput.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (promptHistory.length === 0) return;
-                historyIndex = Math.max(0, historyIndex - 1);
-                el.promptInput.value = promptHistory[historyIndex] || '';
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (promptHistory.length === 0) return;
-                historyIndex = Math.min(promptHistory.length, historyIndex + 1);
-                el.promptInput.value = promptHistory[historyIndex] || '';
-            }
-        });
-        document.querySelectorAll('.chip').forEach(c => {
-            c.addEventListener('click', () => {
-                el.promptInput.value = c.dataset.cmd;
-                el.promptForm.dispatchEvent(new Event('submit'));
-            });
-        });
+        // (sandbox stats pill / time controls / prompt input are gone — the
+        // app is now strictly live-news + history-explorer.)
 
         // help
         el.helpBtn.addEventListener('click', () => el.helpModal.classList.remove('hidden'));
@@ -113,7 +48,6 @@ const UI = (() => {
             const next = MapView.toggleMode();
             projBtn.textContent = next === 'globe' ? '🗺' : '🌐';
             UI.log(next === 'globe' ? 'Gaia curves into a sphere. Drag to rotate.' : 'Gaia unrolls flat again.', 'info');
-            if (next === 'globe') Quests.trigger(null, { kind:'globe' });
         });
 
         // data layer cycle
@@ -154,15 +88,20 @@ const UI = (() => {
         if (newsSearch) newsSearch.addEventListener('input', () => News.render());
 
         // achievements
+        // event detail modal
+        const eventModal = $('eventModal');
+        const eventClose = $('eventClose');
+        if (eventClose) eventClose.addEventListener('click', hideEventDetail);
+        if (eventModal) eventModal.addEventListener('click', e => {
+            if (e.target === eventModal) hideEventDetail();
+        });
+
         el.achvBtn.addEventListener('click', () => openAchievements());
         el.achvClose.addEventListener('click', () => el.achvModal.classList.add('hidden'));
         el.achvModal.addEventListener('click', (e) => { if (e.target === el.achvModal) el.achvModal.classList.add('hidden'); });
 
-        // log clear
-        el.clearLog.addEventListener('click', () => { el.logList.innerHTML = ''; });
-
         // country detail close
-        el.cdClose.addEventListener('click', () => {
+        if (el.cdClose) el.cdClose.addEventListener('click', () => {
             el.countryDetail.classList.add('hidden');
             MapView.setClicked(null);
         });
@@ -191,92 +130,35 @@ const UI = (() => {
             showCountryDetail(id);
             Achievements.noteClick(id);
             if (Achievements.counters.countriesClicked.size >= 20) {
-                Quests.trigger(null, { kind:'click_tour' });
             }
             el.tooltip.classList.add('hidden');
         });
 
-        // keyboard shortcuts
+        // keyboard shortcuts (live-news + history-explorer surface)
         window.addEventListener('keydown', (e) => {
             if (e.target.tagName === 'INPUT') return;
-            if (e.key === ' ') {
-                e.preventDefault();
-                // toggle pause / 1x
-                const current = world.speed;
-                world.speed = current === 0 ? 1 : 0;
-                document.querySelectorAll('.tc').forEach(b => {
-                    b.classList.toggle('active', parseInt(b.dataset.speed) === world.speed);
-                });
-            }
-            if (e.key === '/' && document.activeElement !== el.promptInput) {
-                e.preventDefault();
-                el.promptInput.focus();
-            }
             if (e.key === 'Escape') {
-                el.helpModal.classList.add('hidden');
-                el.achvModal.classList.add('hidden');
-                el.countryDetail.classList.add('hidden');
+                el.helpModal?.classList.add('hidden');
+                el.achvModal?.classList.add('hidden');
+                el.countryDetail?.classList.add('hidden');
                 MapView.setClicked(null);
             }
-            if (e.key === 'h' || e.key === 'H') el.helpModal.classList.toggle('hidden');
+            if (e.key === 'h' || e.key === 'H') el.helpModal?.classList.toggle('hidden');
             if (e.key === 'r' || e.key === 'R') MapView.resetView();
         });
-
-        // random rotating prompt hints
-        rotateHints();
 
         // site-wide mode switcher (Gaia / Terra)
         document.querySelectorAll('.mode-tab').forEach(tab => {
             tab.addEventListener('click', () => setMode(tab.dataset.mode));
         });
 
-        // first-load onboarding: pulse the prompt, focus it after a beat
-        const formEl = document.querySelector('.prompt');
-        if (formEl) formEl.classList.add('first-pulse');
-        setTimeout(() => el.promptInput.focus({ preventScroll: true }), 1200);
-        setTimeout(() => formEl?.classList.remove('first-pulse'), 6000);
     }
 
     /* ---------- Stats ---------- */
 
-    function updateStats() {
-        const ids = ALL_COUNTRY_IDS;
-        let totalPop = 0, happy = 0, econ = 0, peace = 0, health = 0, climate = 0, w = 0;
-        for (const id of ids) {
-            const cs = world.countryState[id];
-            if (!cs) continue;
-            const weight = cs.pop;
-            totalPop += cs.pop;
-            happy   += cs.happy   * weight;
-            econ    += cs.econ    * weight;
-            peace   += cs.peace   * weight;
-            health  += cs.health  * weight;
-            climate += cs.climate * weight;
-            w += weight;
-        }
-        const norm = w > 0 ? w : 1;
-        const hN = happy/norm, eN = econ/norm, pN = peace/norm, hlN = health/norm, clN = climate/norm;
-
-        el.statPop.textContent    = formatPop(totalPop);
-        el.statHappy.textContent  = pct(hN);
-        el.statEcon.textContent   = pct(eN);
-        el.statPeace.textContent  = pct(pN);
-        el.statHealth.textContent = pct(hlN);
-        el.statClimate.textContent= pct(clN);
-
-        el.statPopBar.style.width   = Math.min(100, totalPop / 10000 * 100) + '%';
-        el.statHappyBar.style.width = (hN*100) + '%';
-        el.statEconBar.style.width  = (eN*100) + '%';
-        el.statPeaceBar.style.width = (pN*100) + '%';
-        el.statHealthBar.style.width= (hlN*100) + '%';
-        el.statClimateBar.style.width = (clN*100) + '%';
-
-        // mobile pill
-        if (el.pillPop)   el.pillPop.textContent   = '🌍 ' + formatPop(totalPop);
-        if (el.pillHappy) el.pillHappy.textContent = '☺ ' + Math.round(hN*100) + '%';
-
-        el.activeEventsCount.textContent = Events.countActive();
-    }
+    /* World-pulse stats removed with the sandbox. Kept as a no-op so any
+       lingering callers don't blow up. */
+    function updateStats() {}
 
     function formatPop(m) {
         if (m >= 1000) return (m / 1000).toFixed(2) + 'B';
@@ -319,15 +201,14 @@ const UI = (() => {
 
     function showTooltip(id, x, y) {
         const c = COUNTRIES[id];
-        const cs = world.countryState[id];
         if (!c) { el.tooltip.classList.add('hidden'); return; }
         const flag = flagEmoji(id);
+        const capital = (typeof CAPITALS !== 'undefined' && CAPITALS[id]) || '';
         el.tooltip.innerHTML = `
             <div class="tt-name">${flag ? flag + ' ' : ''}${c.name}</div>
-            <div class="tt-row"><span>Population</span><b>${formatPop(cs.pop)}</b></div>
-            <div class="tt-row"><span>Culture</span><b>${CULTURES[c.culture].name}</b></div>
-            <div class="tt-row"><span>Happiness</span><b>${pct(cs.happy)}</b></div>
-            <div class="tt-row"><span>Peace</span><b>${pct(cs.peace)}</b></div>
+            ${capital ? `<div class="tt-row"><span>Capital</span><b>${capital}</b></div>` : ''}
+            <div class="tt-row"><span>Population</span><b>${formatPop(c.pop)}</b></div>
+            <div class="tt-row"><span>Continent</span><b>${(c.continent || '').replace(/^./,s=>s.toUpperCase())}</b></div>
         `;
         el.tooltip.style.left = x + 'px';
         el.tooltip.style.top = y + 'px';
@@ -338,38 +219,25 @@ const UI = (() => {
 
     function showCountryDetail(id) {
         const c = COUNTRIES[id];
-        const cs = world.countryState[id];
-        if (!c || !cs) return;
+        if (!c) return;
         const flag = flagEmoji(id);
-        el.cdName.textContent = (flag ? flag + '  ' : '') + c.name;
-        el.cdPop.textContent = formatPop(cs.pop);
-        el.cdCulture.textContent = CULTURES[c.culture].name + ' · ' + CULTURES[c.culture].signature;
-        el.cdHappy.textContent = pct(cs.happy);
-        el.cdEcon.textContent = pct(cs.econ);
-        el.cdHealth.textContent = pct(cs.health);
-        el.cdPeace.textContent = pct(cs.peace);
+        if (el.cdName)    el.cdName.textContent    = (flag ? flag + '  ' : '') + c.name;
+        if (el.cdPop)     el.cdPop.textContent     = formatPop(c.pop);
+        const capital = (typeof CAPITALS !== 'undefined' && CAPITALS[id]) || '—';
+        if (el.cdCulture) el.cdCulture.textContent = capital;
+        if (el.cdHappy)   el.cdHappy.textContent   = (c.continent || '—').replace(/^./, s => s.toUpperCase());
+        if (el.cdEcon)    el.cdEcon.textContent    = 'UTC' + (c.tz >= 0 ? '+' : '') + c.tz;
 
-        // local time
-        const utcH = world.clock.getUTCHours() + world.clock.getUTCMinutes()/60;
+        // real local time
+        const d = new Date();
+        const utcH = d.getUTCHours() + d.getUTCMinutes()/60;
         let lh = (utcH + c.tz) % 24;
         if (lh < 0) lh += 24;
-        const h = Math.floor(lh);
-        const m = Math.floor((lh - h) * 60);
-        el.cdTime.textContent = pad2(h) + ':' + pad2(m);
+        const h = Math.floor(lh), m = Math.floor((lh - h) * 60);
+        if (el.cdTime) el.cdTime.textContent = pad2(h) + ':' + pad2(m) + ' local';
+        if (el.cdActivity) el.cdActivity.textContent = `${c.name} sits in the ${(c.continent || '').replace(/^./,s=>s.toUpperCase())} region. Tap a timeline mark to see what happened here through history.`;
 
-        // a sampled person doing something
-        const person = Population.randomInCountry(id);
-        if (person) {
-            const cultureGreet = CULTURES[c.culture].greeting;
-            el.cdActivity.textContent = `"${cultureGreet}," says ${person.name}, ${person.activity}.`;
-        } else {
-            el.cdActivity.textContent = '—';
-        }
-
-        // sparkline
-        renderSparkline(cs.history || []);
-
-        el.countryDetail.classList.remove('hidden');
+        if (el.countryDetail) el.countryDetail.classList.remove('hidden');
     }
 
     function renderSparkline(history) {
@@ -597,6 +465,7 @@ const UI = (() => {
             m.addEventListener('click', e => {
                 e.stopPropagation();
                 Main.travelTo(he.year);
+                showEventDetail(he);
             });
             marks.appendChild(m);
             tlItems.marks.push({ el: m, year: he.year, severity: he.severity });
@@ -715,6 +584,98 @@ const UI = (() => {
         if (el.timelineZoomChip) el.timelineZoomChip.style.opacity = '0';
     }
 
+    /* ---------- Event detail (History mode) ---------- */
+
+    function showEventDetail(he) {
+        if (!he) return;
+        const modal = document.getElementById('eventModal');
+        if (!modal) return;
+        const title = document.getElementById('eventTitle');
+        const yearEl = document.getElementById('eventYear');
+        const eraEl  = document.getElementById('eventEra');
+        const sumEl  = document.getElementById('eventSummary');
+        const flagsEl= document.getElementById('eventFlags');
+        const outEl  = document.getElementById('eventOutcome');
+        const figEl  = document.getElementById('eventFigures');
+        const chEl   = document.getElementById('eventChanges');
+        const figSection = document.getElementById('eventFiguresSection');
+        const chSection  = document.getElementById('eventChangesSection');
+        const outSection = document.getElementById('eventOutcomeSection');
+        const invSection = document.getElementById('eventInvolvedSection');
+
+        title.textContent = (he.emoji ? he.emoji + '  ' : '') + (he.label || 'Event');
+        yearEl.textContent = he.year < 0 ? Math.abs(he.year) + ' BCE' : he.year;
+        const era = History.eraAt(he.year);
+        eraEl.textContent = era ? era.name : '';
+
+        // resolve target → list of country IDs
+        const ids = History.resolveHistTarget ? History.resolveHistTarget(he.target) : [];
+        const dedup = Array.from(new Set(ids)).slice(0, 24);
+
+        // summary
+        const d = he.details || {};
+        sumEl.textContent = d.summary || he.note || '—';
+
+        // flags
+        flagsEl.innerHTML = '';
+        if (dedup.length) {
+            invSection.style.display = '';
+            for (const cid of dedup) {
+                const c = COUNTRIES[cid]; if (!c) continue;
+                const chip = document.createElement('span');
+                chip.className = 'ev-flag';
+                chip.innerHTML = `<span class="ev-flag-emoji">${flagEmoji(cid)}</span><span>${c.name}</span>`;
+                flagsEl.appendChild(chip);
+            }
+        } else {
+            invSection.style.display = 'none';
+        }
+
+        // outcome
+        if (d.outcome) {
+            outSection.style.display = '';
+            outEl.textContent = d.outcome;
+        } else {
+            outSection.style.display = 'none';
+        }
+
+        // figures
+        figEl.innerHTML = '';
+        if (d.figures && d.figures.length) {
+            figSection.style.display = '';
+            for (const f of d.figures) {
+                const li = document.createElement('li');
+                li.textContent = f;
+                figEl.appendChild(li);
+            }
+        } else {
+            figSection.style.display = 'none';
+        }
+
+        // changes
+        chEl.innerHTML = '';
+        if (d.changes && d.changes.length) {
+            chSection.style.display = '';
+            for (const c of d.changes) {
+                const li = document.createElement('li');
+                li.textContent = c;
+                chEl.appendChild(li);
+            }
+        } else {
+            chSection.style.display = 'none';
+        }
+
+        // Highlight involved countries on the map.
+        MapView.spotlight && MapView.spotlight(dedup);
+
+        modal.classList.remove('hidden');
+    }
+
+    function hideEventDetail() {
+        document.getElementById('eventModal')?.classList.add('hidden');
+        MapView.spotlight && MapView.spotlight([]);
+    }
+
     /* ---------- Era banner ---------- */
 
     function showEraBanner(era, year) {
@@ -816,6 +777,7 @@ const UI = (() => {
         updateClock,
         log,
         showCountryDetail,
+        showEventDetail,
         showEraBanner,
         boot,
         rebuildTimeline,

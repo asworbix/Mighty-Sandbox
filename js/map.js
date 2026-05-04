@@ -13,6 +13,7 @@ const MapView = (() => {
     let land = null;
     let hoverId = null;
     let clickedId = null;
+    let spotlightSet = null;       // Set of country IDs highlighted by event detail
 
     let scale = 260;            // projection scale
     let translate = [0, 0];
@@ -410,8 +411,27 @@ const MapView = (() => {
 
     /* ---------- render ---------- */
 
+    /* Subsolar-point math (formerly in weather.js) so the night-side
+       terminator still tracks the real sun. */
+    function subsolarPoint(date) {
+        const d = new Date(date);
+        const utcHours = d.getUTCHours() + d.getUTCMinutes()/60 + d.getUTCSeconds()/3600;
+        const lon = -(utcHours - 12) * 15;
+        const start = Date.UTC(d.getUTCFullYear(), 0, 0);
+        const dayOfYear = Math.floor((d - start) / 86400000);
+        const rad = Math.PI / 180;
+        const decl = 23.44 * Math.sin((360 / 365) * (dayOfYear - 81) * rad);
+        return { lat: decl, lon };
+    }
+    function sunIntensity(lat, lon, sun) {
+        const rad = Math.PI / 180;
+        const cosZ = Math.sin(sun.lat * rad) * Math.sin(lat * rad) +
+                     Math.cos(sun.lat * rad) * Math.cos(lat * rad) * Math.cos((sun.lon - lon) * rad);
+        return Math.max(0, Math.min(1, 0.5 + cosZ * 2.5));
+    }
+
     function render(world) {
-        const sun = Weather.subsolarPoint(world.clock);
+        const sun = subsolarPoint(world.clock);
 
         if (autoRotate) {
             rotate[0] = (rotate[0] - 0.05) % 360;
@@ -423,7 +443,7 @@ const MapView = (() => {
         // refresh sun cache once per frame
         for (const id in COUNTRIES) {
             const c = COUNTRIES[id];
-            sunCountryCache[id] = Weather.sunIntensity(c.lat, c.lon, sun);
+            sunCountryCache[id] = sunIntensity(c.lat, c.lon, sun);
         }
 
         ctx.save();
@@ -476,23 +496,16 @@ const MapView = (() => {
             let rgb = sInt !== undefined ? applyDaylight(baseRgb, sInt) : baseRgb;
             if (id === hoverId)   rgb = brightenRgb(rgb, 0.4);
             if (id === clickedId) rgb = brightenRgb(rgb, 0.65);
+            if (spotlightSet && spotlightSet.has(id)) rgb = mixRgb(rgb, [255, 211, 107], 0.55);
             ctx.fillStyle = rgbStr(rgb[0], rgb[1], rgb[2]);
             ctx.fill(cp.p2d);
             ctx.stroke(cp.p2d);
         }
 
-        // arcs (trade / war / migration)
-        Arcs.render(ctx, projection);
-
-        // city lights + people (uses internal sun cache)
-        Population.render(ctx, projection, sun);
-
         ctx.restore();
 
-        // fx layer
+        // fx layer (cleared so any leftovers from the old sandbox vanish)
         fxCtx.clearRect(0, 0, width, height);
-        Weather.renderParticles(fxCtx, projection);
-        Events.renderLabels(fxCtx, projection);
 
         // night-side vignette overlay
         renderDayNightShade(sun);
@@ -638,7 +651,11 @@ const MapView = (() => {
         return null;
     }
 
-    function setClicked(id) { clickedId = id; }
+    function setClicked(id) { clickedId = id; renderDirty = true; }
+    function spotlight(ids) {
+        spotlightSet = (ids && ids.length) ? new Set(ids) : null;
+        renderDirty = true;
+    }
     function onClick2(fn) { onClickHandler = fn; }
     function onHover(fn) { onHoverHandler = fn; }
     function project(ll) { return projection(ll); }
@@ -665,6 +682,7 @@ const MapView = (() => {
         cycleLayer,
         invalidateFills,
         consumeRenderDirty,
+        spotlight,
         setAutoRotate(v) { autoRotate = !!v; renderDirty = true; },
         onClick: onClick2, onHover,
         setClicked,

@@ -87,22 +87,58 @@ const History = (() => {
         { year:-332,  target:'middle east',     kind:'war',        severity:0.7, duration:30, label:'Alexander conquers Persia', emoji:'⚔' },
         { year:-221,  target:['156'],           kind:'prosperity', severity:0.8, duration:40, label:'China is unified under Qin', emoji:'🐉' },
         { year:-44,   target:['380'],           kind:'revolution', severity:0.7, duration:20, label:'Julius Caesar is assassinated', emoji:'🗡' },
-        { year:79,    target:['380'],           kind:'volcano',    severity:0.9, duration:30, label:'Vesuvius erupts over Pompeii', emoji:'🌋' },
-        { year:476,   target:['380'],           kind:'revolution', severity:0.8, duration:40, label:'Fall of the Western Roman Empire', emoji:'🏛' },
+        { year:79,    target:['380'], kind:'volcano', severity:0.9, duration:30, label:'Vesuvius erupts over Pompeii', emoji:'🌋',
+            details:{
+                summary:"On 24 August 79 CE Mount Vesuvius unleashed a Plinian eruption that buried Pompeii, Herculaneum and several smaller towns under metres of ash and pyroclastic flows in less than 24 hours.",
+                outcome:"Around 16,000 dead. The cities lay sealed beneath ash for 1,700 years until rediscovered in the 1700s — preserving the most complete snapshot of Roman daily life ever found. Rome's southern coast was permanently reshaped.",
+                figures:["Pliny the Elder (naturalist, died trying to rescue refugees)","Pliny the Younger (eyewitness, wrote the surviving account)","Emperor Titus (organised disaster relief)"],
+                changes:["~16,000 dead","Pompeii and Herculaneum sealed beneath ash, preserved","Provided the modern world's clearest window into Roman daily life","'Plinian eruption' became the standard term in volcanology","Vesuvius remains active and threatens 3M+ people in Naples today"]
+            } },
+        { year:476,   target:['380','250','826','276','724','792'], kind:'revolution', severity:0.8, duration:40, label:'Fall of the Western Roman Empire', emoji:'🏛',
+            details:{
+                summary:"The last Roman emperor in the west, the boy-emperor Romulus Augustulus, was deposed by the Germanic chieftain Odoacer. The eastern half of the empire continued from Constantinople for another thousand years.",
+                outcome:"Centralised Roman authority in western Europe collapsed. Power devolved to local kings, bishops and warlords; long-distance trade contracted; a thousand-year project of fragmented post-Roman polities began.",
+                figures:["Romulus Augustulus (last western emperor, deposed)","Odoacer (Germanic chieftain, first 'King of Italy')","Zeno (eastern Roman emperor in Constantinople)"],
+                changes:["Western Roman Empire dissolved into Ostrogothic, Vandal, Frankish and Visigothic kingdoms","Latin slowly diverged into early Romance languages","Christianity replaced Roman civic religion as the binding force across the former west","Eastern Roman Empire (Byzantium) carried Roman law and Greek culture forward"]
+            } },
 
         // --- Medieval ---
         { year:632,   target:'middle east',     kind:'prosperity', severity:0.8, duration:40, label:'Rise of the Islamic Caliphate', emoji:'☪' },
         { year:800,   target:['250','276'],     kind:'prosperity', severity:0.6, duration:35, label:'Charlemagne crowned Emperor', emoji:'👑' },
         { year:1066,  target:['826'],           kind:'war',        severity:0.6, duration:25, label:'Norman Conquest of England', emoji:'⚔' },
-        { year:1206,  target:['496'],           kind:'war',        severity:0.9, duration:60, label:'Genghis Khan unites the steppes', emoji:'🏹', note:'The largest contiguous empire in history begins to form.' },
+        { year:1206,  target:['496','156','643','398','417','364','368','398','156'], kind:'war', severity:0.95, duration:60, label:'Genghis Khan unites the Mongol tribes', emoji:'🏹', note:'The largest contiguous empire in history begins to form.',
+            details:{
+                summary:"At a kurultai on the Onon River, Temüjin was proclaimed 'Genghis Khan' (Universal Ruler) of all Mongol tribes. Within 70 years his descendants would rule from Korea to Hungary — the largest contiguous land empire in history.",
+                outcome:"Mongol conquests reshaped Eurasia. Cities that resisted (Samarkand, Merv, Baghdad in 1258) were obliterated; those that submitted prospered along the Pax Mongolica trade routes. The Silk Road became safer than at any point before or since, enabling Marco Polo's journey and the Black Death's later transmission.",
+                figures:["Genghis Khan (Temüjin)","Subutai (greatest Mongol general — 65 battles, never lost)","Ögedei Khan (3rd Great Khan)","Kublai Khan (founded the Yuan Dynasty in China, 1271)","Hulagu Khan (sacked Baghdad 1258)"],
+                changes:["Created the largest contiguous land empire in history","Pax Mongolica enabled trans-Eurasian trade and travel","Khwarezm, Jin China, Abbasid Caliphate destroyed","Mongol-ruled Yuan dynasty in China (1271-1368)","Indirect: Black Death traveled the Silk Road in the 1340s","Russia under the 'Mongol Yoke' for 240 years"]
+            } },
         { year:1271,  target:['156','380'],     kind:'innovation', severity:0.5, duration:25, label:'Marco Polo leaves for Asia', emoji:'🧭' },
         { year:1337,  target:['250','826'],     kind:'war',        severity:0.6, duration:60, label:'The Hundred Years\' War begins', emoji:'⚔' },
-        { year:1347,  target:'europe',          kind:'plague',     severity:1.0, duration:180,label:'The Black Death', emoji:'☠', note:'A third of Europe will not see the next decade.' },
+        { year:1347,  target:'europe',          kind:'plague',     severity:1.0, duration:180,label:'The Black Death', emoji:'☠', note:'A third of Europe will not see the next decade.',
+            details:{
+                summary:"Yersinia pestis arrived from the Crimea aboard Genoese trading ships and tore through European cities and villages between 1347 and 1351, killing somewhere between a third and half of the population.",
+                outcome:"Europe's labour markets were upended. With workers scarce, peasants demanded — and won — better wages and freedoms. Feudal serfdom began its long retreat. Confidence in the Catholic Church wavered after its inability to halt the pestilence; pogroms scapegoated Jewish communities.",
+                figures:["Pope Clement VI (sheltered Jews fleeing pogroms in Avignon)","Giovanni Boccaccio (chronicler in The Decameron)","Edward III of England (lost a daughter, mobilised quarantines)"],
+                changes:["European population collapsed from ~80M to ~50M","End of the medieval labour shortage taboo — wages doubled in many regions","Feudalism began to break down across northwestern Europe","Wave of antisemitic pogroms across the Rhineland and Aragon","Birth of the first modern public-health quarantines (Ragusa, 1377)"]
+            } },
 
         // --- Renaissance ---
         { year:1440,  target:['276'],           kind:'innovation', severity:0.9, duration:60, label:'Gutenberg invents the printing press', emoji:'📜' },
-        { year:1453,  target:['792'],           kind:'war',        severity:0.8, duration:30, label:'Fall of Constantinople', emoji:'🏰' },
-        { year:1492,  target:['724'],           kind:'innovation', severity:0.8, duration:40, label:'Columbus reaches the Americas', emoji:'⛵' },
+        { year:1453,  target:['792','300','380','643'], kind:'war', severity:0.9, duration:30, label:'Fall of Constantinople', emoji:'🏰',
+            details:{
+                summary:"After a 53-day siege using massive bronze cannons cast by the Hungarian engineer Orban, Sultan Mehmed II's Ottoman army breached the Theodosian walls of Constantinople on 29 May 1453. The 1,123-year-old Eastern Roman Empire ended that day.",
+                outcome:"Constantinople — the largest city in Europe — became Istanbul, the new Ottoman capital. Greek scholars fled westward with manuscripts that helped fuel the Italian Renaissance. The eastern Mediterranean trade routes closed to Europeans, motivating Portuguese voyages around Africa and Spanish westward expeditions like Columbus's.",
+                figures:["Mehmed II 'the Conqueror' (Ottoman sultan, age 21)","Constantine XI Palaiologos (last Roman emperor, died fighting)","Giovanni Giustiniani (Genoese commander of the defence)","Orban (cannon engineer)","Cardinal Isidore (papal legate)"],
+                changes:["End of the Eastern Roman / Byzantine Empire after 1,123 years","Ottoman Empire became the dominant Mediterranean power","Conventional date for the start of the Modern era / late Middle Ages","Greek scholars fled to Italy → Renaissance acceleration","Search for new sea routes east → Age of Exploration","Hagia Sophia converted to a mosque"]
+            } },
+        { year:1492,  target:['724','620','840','484','076','170','862','032'], kind:'innovation', severity:0.9, duration:40, label:'Columbus reaches the Americas', emoji:'⛵',
+            details:{
+                summary:"Funded by the Catholic Monarchs of Spain, the Genoese mariner Cristoforo Colombo made landfall in the Bahamas on 12 October 1492, opening sustained contact between Afro-Eurasia and the Americas.",
+                outcome:"Began the Columbian Exchange — a transcontinental swap of crops, livestock, diseases and people that reshaped global diets, populations and ecosystems. For the indigenous peoples of the Americas, it inaugurated centuries of conquest, demographic catastrophe and forced labour.",
+                figures:["Christopher Columbus (Genoese navigator)","Isabella I of Castile and Ferdinand II of Aragon (Catholic Monarchs)","Taíno of Guanahaní (first peoples encountered)"],
+                changes:["Spanish empire established in the Caribbean → Mexico → Andes within a generation","Smallpox, measles and influenza killed 50–90% of indigenous populations","Tomato, potato, maize, tobacco and chili globalised from the Americas","Atlantic slave trade systematized to replace decimated indigenous labour","Iberian peninsula became the world's first global empire"]
+            } },
         { year:1517,  target:['276'],           kind:'revolution', severity:0.7, duration:60, label:'Luther nails his 95 Theses', emoji:'✝' },
         { year:1519,  target:['484'],           kind:'war',        severity:0.9, duration:50, label:'Cortés invades the Aztec Empire', emoji:'⚔' },
         { year:1543,  target:['616'],           kind:'innovation', severity:0.7, duration:40, label:'Copernicus: Earth orbits the Sun', emoji:'☀' },
@@ -115,8 +151,20 @@ const History = (() => {
         { year:1687,  target:['826'],           kind:'innovation', severity:0.9, duration:40, label:'Newton publishes Principia', emoji:'🍎' },
         { year:1755,  target:['620'],           kind:'earthquake', severity:1.0, duration:30, label:'Lisbon earthquake', emoji:'🌐', note:'A city unmade in minutes.' },
         { year:1769,  target:['826'],           kind:'innovation', severity:0.8, duration:40, label:'Watt improves the steam engine', emoji:'⚙' },
-        { year:1776,  target:['840'],           kind:'revolution', severity:0.9, duration:60, label:'American independence declared', emoji:'🗽' },
-        { year:1789,  target:['250'],           kind:'revolution', severity:0.9, duration:60, label:'French Revolution begins', emoji:'🎭' },
+        { year:1776,  target:['840','826','250'], kind:'revolution', severity:0.9, duration:60, label:'American independence declared', emoji:'🗽',
+            details:{
+                summary:"Thirteen British colonies in North America declared independence from George III on 4 July 1776, framed by Jefferson's argument that governments derive their just powers from the consent of the governed.",
+                outcome:"After eight years of war and decisive French intervention, Britain recognized the United States in 1783. The new republic became a working laboratory for written constitutions, separation of powers and (formally) inalienable rights — a template the world would copy for two centuries.",
+                figures:["Thomas Jefferson (principal author)","George Washington (Continental Army commander)","Benjamin Franklin (diplomat to France)","King George III (British monarch)","Marquis de Lafayette (French volunteer general)"],
+                changes:["Birth of the United States as an independent republic","First written national constitution (1789)","French monarchy bankrupted by war debt — preamble to 1789","Wave of independence movements across Latin America in the 1810s–20s","Slavery preserved in the new republic — a contradiction that would erupt in 1861"]
+            } },
+        { year:1789,  target:['250','276','040','826'], kind:'revolution', severity:0.95, duration:60, label:'French Revolution begins', emoji:'🎭',
+            details:{
+                summary:"Bankrupt after backing the American war and crippled by failed harvests, France's Estates-General reconstituted itself as the National Assembly, the Bastille fell on 14 July, and the Declaration of the Rights of Man followed in August.",
+                outcome:"The Bourbon monarchy was abolished, Louis XVI guillotined (1793). The Revolution swung through radical Jacobin terror, Thermidorian reaction, and finally Napoleon's coup of 1799. Its ideals — citizenship, equality before law, secular government, nationalism — became the template for modern politics.",
+                figures:["Louis XVI (executed 1793)","Maximilien Robespierre (Jacobin leader, executed 1794)","Georges Danton","Marie Antoinette (executed 1793)","Napoleon Bonaparte (rose from artillery officer)"],
+                changes:["Abolition of feudal privileges, tithes, hereditary nobility","Declaration of the Rights of Man and of the Citizen","Birth of modern conscript armies and total war","Metric system adopted, secular calendar attempted","Napoleon's later wars exported revolutionary law across Europe"]
+            } },
         { year:1804,  target:'europe',          kind:'war',        severity:0.8, duration:90, label:'Napoleonic Wars', emoji:'⚔' },
         { year:1815,  target:['528'],           kind:'volcano',    severity:1.0, duration:60, label:'Tambora erupts — "year without summer"', emoji:'🌋' },
 
@@ -136,30 +184,96 @@ const History = (() => {
         { year:1905,  target:'europe',          kind:'innovation', severity:0.9, duration:40, label:'Einstein publishes relativity', emoji:'🧠' },
         { year:1906,  target:['840'],           kind:'earthquake', severity:1.0, duration:30, label:'San Francisco earthquake', emoji:'🌐' },
         { year:1912,  target:'world',           kind:'storm',      severity:0.7, duration:20, label:'RMS Titanic sinks', emoji:'🚢' },
-        { year:1914,  target:'europe',          kind:'war',        severity:1.0, duration:150, label:'The First World War', emoji:'⚔', note:'A generation marches off to mud and trenches.' },
+        { year:1914,  target:['276','040','792','643','250','826','380','840','392','356','036','124'], kind:'war', severity:1.0, duration:150, label:'The First World War', emoji:'⚔', note:'A generation marches off to mud and trenches.',
+            details:{
+                summary:"The assassination of Archduke Franz Ferdinand by a Bosnian Serb nationalist set off a cascade of alliances. By August 1914 every major European power was at war; the conflict would draw in 70 million combatants and end four empires.",
+                outcome:"~17 million dead, ~20 million wounded. The German, Austro-Hungarian, Russian and Ottoman empires all collapsed. Treaty of Versailles imposed harsh terms on Germany — laying groundwork for World War II within a generation. Bolsheviks seized Russia in 1917.",
+                figures:["Kaiser Wilhelm II (Germany)","Tsar Nicholas II (Russia, abdicated 1917, executed 1918)","Emperor Franz Joseph / Karl I (Austria-Hungary)","Woodrow Wilson (US president)","Mehmed V / VI (Ottoman sultan)","Ferdinand Foch (Allied commander)"],
+                changes:["End of four empires (German, Russian, Austro-Hungarian, Ottoman)","Birth of Yugoslavia, Czechoslovakia, Poland, Finland, Baltic states","Russian Revolution → first communist state","League of Nations established (and ignored)","Versailles humiliation seeded German revanchism","Modern Middle East borders drawn by Sykes-Picot"]
+            } },
         { year:1918,  target:'world',           kind:'plague',     severity:1.0, duration:120, label:'Spanish flu pandemic', emoji:'☠' },
-        { year:1917,  target:['643'],           kind:'revolution', severity:1.0, duration:60, label:'Russian Revolution', emoji:'🔥' },
+        { year:1917,  target:['643','276','156','840','826','250'], kind:'revolution', severity:1.0, duration:60, label:'Russian Revolution', emoji:'🔥',
+            details:{
+                summary:"Two revolutions in one year. February: bread riots and mutinies brought down the 304-year-old Romanov dynasty. October: Lenin's Bolsheviks seized power from the provisional government in Petrograd. By 1922 the Soviet Union was born.",
+                outcome:"World's first communist state. The 1917-22 civil war killed ~7M. Stalin's collectivization, terror, and gulag system killed ~10–20M more. Yet the Soviet Union also industrialized, defeated Nazi Germany, and became one of two Cold War superpowers. Communism spread to one-third of humanity by 1980.",
+                figures:["Vladimir Lenin (Bolshevik leader)","Leon Trotsky (Red Army founder)","Tsar Nicholas II (executed 1918)","Alexander Kerensky (provisional government PM)","Joseph Stalin (rose after Lenin's 1924 death)"],
+                changes:["End of the Romanov dynasty (304 years)","Birth of the world's first communist state","Russian Civil War, 1917-22: ~7-12M dead","Inspired communist movements across the world (China 1949, Cuba 1959, Vietnam, etc.)","Cold War lineage traces back to Lenin's October coup","One-party Marxist-Leninist political model copied globally"]
+            } },
         { year:1920,  target:['840'],           kind:'festival',   severity:0.6, duration:30, label:'The Roaring Twenties begin', emoji:'🎷' },
         { year:1929,  target:'world',           kind:'drought',    severity:0.8, duration:80, label:'Wall Street Crash — Great Depression', emoji:'📉' },
-        { year:1939,  target:'world',           kind:'war',        severity:1.0, duration:200, label:'The Second World War', emoji:'⚔', note:'The deadliest conflict in human history.' },
-        { year:1945,  target:['392'],           kind:'meteor',     severity:1.0, duration:30, label:'Atomic bombs fall on Hiroshima and Nagasaki', emoji:'☢' },
-        { year:1947,  target:['356','586'],     kind:'migration',  severity:0.9, duration:60, label:'Partition of India and Pakistan', emoji:'👣' },
+        { year:1939,  target:['276','616','826','250','643','840','392','156','380','356','036','124','710'], kind:'war', severity:1.0, duration:200, label:'The Second World War', emoji:'⚔', note:'The deadliest conflict in human history.',
+            details:{
+                summary:"Hitler's invasion of Poland triggered British and French declarations of war. Within two years Germany controlled most of continental Europe and Japan had attacked Pearl Harbor. The conflict spanned every inhabited continent and ended only after the atomic bombings of August 1945.",
+                outcome:"60–80 million dead — the deadliest war in human history. The Holocaust murdered six million Jews. Allied victory split the world into US-led and Soviet-led blocs — the Cold War. The United Nations, IMF, NATO and the Universal Declaration of Human Rights all emerged from the post-war settlement.",
+                figures:["Adolf Hitler (Nazi Germany)","Winston Churchill (UK)","Franklin D. Roosevelt → Harry Truman (US)","Joseph Stalin (USSR)","Hideki Tojo / Hirohito (Japan)","Charles de Gaulle (Free France)","Chiang Kai-shek / Mao Zedong (China)"],
+                changes:["End of European colonialism began (Indian independence by 1947)","US and USSR emerged as superpowers","Atomic age began at Hiroshima","Israel founded in 1948","Germany and Japan rebuilt as US-aligned democracies","Cold War carved Europe at the Iron Curtain","UN, IMF, World Bank, NATO institutions born"]
+            } },
+        { year:1945,  target:['392','840','643','156'], kind:'meteor', severity:1.0, duration:30, label:'Atomic bombs fall on Hiroshima and Nagasaki', emoji:'☢',
+            details:{
+                summary:"On 6 August 1945 a uranium bomb destroyed Hiroshima; three days later a plutonium bomb destroyed Nagasaki. Within weeks Japan surrendered, ending World War II.",
+                outcome:"~210,000 dead by year's end, many more from radiation in the years that followed. Humanity entered the nuclear age — and within four years the USSR would also have the bomb, beginning a 40-year arms race that at peak held 70,000 warheads. Nuclear deterrence has shaped every major power conflict since.",
+                figures:["Harry S. Truman (US president — gave the order)","J. Robert Oppenheimer (Manhattan Project director)","Emperor Hirohito (announced surrender)","Joseph Stalin (USSR — accelerated his own bomb program)","Albert Einstein (signed letter that triggered the program)","Paul Tibbets (pilot of the Enola Gay)"],
+                changes:["End of World War II","Birth of the nuclear age — and the arms race","US occupation of Japan → modern democratic Japan","Permanent Security Council seats for nuclear powers","Nuclear Non-Proliferation Treaty (1968)","Existential awareness of human-caused extinction risk"]
+            } },
+        { year:1947,  target:['356','586','050','826'], kind:'migration', severity:0.95, duration:60, label:'Partition of India and Pakistan', emoji:'👣',
+            details:{
+                summary:"As the British Raj withdrew, the subcontinent was hastily split along religious lines into Hindu-majority India and Muslim-majority Pakistan (East and West). The Radcliffe Line, drawn in five weeks by a man who had never visited India, sliced through the Punjab and Bengal.",
+                outcome:"~14 million people fled across the new borders — the largest mass migration in human history. Communal violence killed an estimated 1–2 million. Three subsequent wars between India and Pakistan, the Bangladesh Liberation War of 1971, and an ongoing Kashmir dispute all trace back to this moment.",
+                figures:["Lord Louis Mountbatten (last viceroy)","Jawaharlal Nehru (first PM of India)","Muhammad Ali Jinnah (founder of Pakistan)","Mahatma Gandhi (assassinated 1948 by a Hindu nationalist)","Cyril Radcliffe (drew the borders)"],
+                changes:["British Raj ended, two new sovereign states born","~14 million displaced — largest peacetime migration ever","1947–48 Indo-Pakistani War (Kashmir)","1971: East Pakistan became Bangladesh after a war of independence","Nuclear-armed standoff between India and Pakistan since 1998","Kashmir remains the world's most militarized disputed border"]
+            } },
         { year:1948,  target:['376'],           kind:'prosperity', severity:0.6, duration:30, label:'State of Israel declared', emoji:'🕊' },
-        { year:1949,  target:['156'],           kind:'revolution', severity:0.9, duration:50, label:'People\'s Republic of China founded', emoji:'🚩' },
+        { year:1949,  target:['156','158','840','643','410','408','704'], kind:'revolution', severity:0.95, duration:50, label:'People\'s Republic of China founded', emoji:'🚩',
+            details:{
+                summary:"After two decades of civil war (interrupted by World War II), Mao Zedong's Communist forces drove Chiang Kai-shek's Nationalists to Taiwan. On 1 October 1949 Mao proclaimed the People's Republic of China from Tiananmen Gate.",
+                outcome:"China's century of humiliation ended. The new regime proceeded through the disastrous Great Leap Forward (~30M dead in famine), the Cultural Revolution (~1M dead), and after Mao's death the Reform and Opening-Up that lifted ~800 million people out of poverty. Today it's the world's second-largest economy.",
+                figures:["Mao Zedong (CCP chairman)","Zhou Enlai (premier)","Chiang Kai-shek (fled to Taiwan)","Deng Xiaoping (later architect of economic reform)","Lin Biao / Jiang Qing (Cultural Revolution figures)"],
+                changes:["End of the Chinese Civil War","Cross-strait split: PRC vs. Republic of China (Taiwan)","Mass collectivization and the Great Leap Forward famine","Cultural Revolution (1966-76) destroyed traditional culture","Sino-Soviet split (1960s) reshaped the Cold War","Post-1978 reforms produced the largest poverty reduction in history","China became the world's second-largest economy by 2010"]
+            } },
         { year:1957,  target:['643'],           kind:'innovation', severity:0.8, duration:30, label:'Sputnik — the Space Age begins', emoji:'🛰' },
         { year:1961,  target:['643'],           kind:'innovation', severity:0.8, duration:30, label:'Yuri Gagarin orbits Earth', emoji:'🚀' },
         { year:1963,  target:['840'],           kind:'protest',    severity:0.7, duration:30, label:'MLK: "I have a dream"', emoji:'✊' },
-        { year:1969,  target:['840'],           kind:'miracle',    severity:0.9, duration:30, label:'Apollo 11 lands on the Moon', emoji:'🌕', note:'One small step for a man…' },
+        { year:1969,  target:['840','643'], kind:'miracle', severity:0.95, duration:30, label:'Apollo 11 lands on the Moon', emoji:'🌕', note:'One small step for a man…',
+            details:{
+                summary:"On 20 July 1969 the lunar module Eagle touched down in the Sea of Tranquility. Six hours later Neil Armstrong stepped onto the Moon — the first human being to walk on another world — followed by Buzz Aldrin, while Michael Collins orbited above.",
+                outcome:"The United States decisively won the Space Race kicked off by Sputnik in 1957. ~600 million people watched live — the largest single audience in human history at the time. Five more Apollo missions landed on the Moon by 1972; humans haven't returned since.",
+                figures:["Neil Armstrong (mission commander, 1st man on the Moon)","Buzz Aldrin (lunar module pilot)","Michael Collins (command module pilot)","John F. Kennedy (set the goal in 1961, didn't live to see it)","Wernher von Braun (Saturn V chief engineer)"],
+                changes:["United States 'won' the Space Race against the USSR","Apollo computer technology drove the integrated-circuit revolution","Earth from space (the 'Blue Marble' photo) galvanized the environmental movement","Soviet space prestige declined — they pivoted to space stations","Moon Treaty (1967) — outer space declared the 'common heritage' of humankind"]
+            } },
         { year:1971,  target:['704'],           kind:'war',        severity:0.7, duration:40, label:'Vietnam War in full swing', emoji:'⚔' },
         { year:1980,  target:['840'],           kind:'volcano',    severity:0.8, duration:20, label:'Mount St. Helens erupts', emoji:'🌋' },
-        { year:1986,  target:['804'],           kind:'meteor',     severity:0.9, duration:60, label:'Chernobyl disaster', emoji:'☢' },
-        { year:1989,  target:['276'],           kind:'peace',      severity:0.9, duration:40, label:'The Berlin Wall falls', emoji:'🕊', note:'A continent exhales.' },
-        { year:1991,  target:['643'],           kind:'revolution', severity:0.8, duration:40, label:'Soviet Union dissolves', emoji:'🚩' },
+        { year:1986,  target:['804','643','276','752','246','578','826'], kind:'meteor', severity:0.95, duration:60, label:'Chernobyl disaster', emoji:'☢',
+            details:{
+                summary:"In the early hours of 26 April 1986, a botched safety test at Reactor No. 4 of the V. I. Lenin Nuclear Power Plant in northern Ukrainian SSR caused a steam explosion and graphite fire — the worst nuclear accident in history.",
+                outcome:"The Soviet response (concealment, then chaos, then enormous mobilization) cracked the regime's credibility — Gorbachev later called Chernobyl the real reason the Soviet Union fell. Pripyat (population ~50,000) was permanently abandoned. A 30-km exclusion zone persists. The 'New Safe Confinement' arch was placed over the reactor in 2016.",
+                figures:["Mikhail Gorbachev (Soviet leader)","Valery Legasov (chief scientist who diagnosed it; later suicide)","Viktor Bryukhanov (plant director, jailed)","Anatoly Dyatlov (deputy chief engineer, jailed)","~600,000 'liquidators' who fought the reactor fire and contamination"],
+                changes:["~30 immediate deaths; long-term cancer toll estimated 4,000–60,000","Pripyat permanently evacuated","30 km exclusion zone — now a wildlife reserve","Triggered glasnost — accelerated the Soviet collapse","Cooled global nuclear power expansion for decades","New international nuclear-safety treaties (Vienna Convention 1986)"]
+            } },
+        { year:1989,  target:['276','616','203','348','642','100','643','826','840'], kind:'peace', severity:0.95, duration:40, label:'The Berlin Wall falls', emoji:'🕊', note:'A continent exhales.',
+            details:{
+                summary:"After weeks of mass protests across East Germany, Politburo spokesman Günter Schabowski blundered an answer at a press conference suggesting the borders were open immediately. By midnight thousands of East Berliners were dancing on top of the Wall.",
+                outcome:"German reunification followed within a year. Communist regimes across central Europe fell within months — Poland, Hungary, Czechoslovakia ('Velvet Revolution'), Bulgaria, Romania (where Ceaușescu was executed). Two years later the Soviet Union itself dissolved.",
+                figures:["Mikhail Gorbachev (USSR; refused to send tanks)","Helmut Kohl (West German chancellor; pushed reunification)","Lech Wałęsa (Polish Solidarność leader)","Václav Havel (dissident playwright → president)","Ronald Reagan ('tear down this wall', 1987)","Günter Schabowski (mistakenly announced open borders)"],
+                changes:["Germany reunified on 3 October 1990","Soviet bloc dissolved across central and eastern Europe","NATO and EU later expanded eastward","Cold War effectively ended — declared formally in 1991","Gorbachev awarded Nobel Peace Prize","Stasi files opened to the public"]
+            } },
+        { year:1991,  target:['643','804','112','398','417','762','795','860','428','233','440','268','051'], kind:'revolution', severity:0.9, duration:40, label:'Soviet Union dissolves', emoji:'🚩',
+            details:{
+                summary:"After a failed August coup against Gorbachev, the Soviet republics declared independence one by one. On 25 December 1991 Gorbachev resigned and the red flag was lowered over the Kremlin for the last time.",
+                outcome:"Fifteen successor states emerged — Russia, Ukraine, Belarus, the three Baltics, Kazakhstan, the Caucasus and Central Asia. The Cold War ended; the United States stood alone as a 'unipolar' superpower for the next two decades. Russia plunged into a chaotic decade of privatization and oligarchs before Putin's 1999 ascent.",
+                figures:["Mikhail Gorbachev (final Soviet leader, resigned)","Boris Yeltsin (first Russian president)","Leonid Kravchuk (first Ukrainian president)","Nursultan Nazarbayev (Kazakhstan)","George H. W. Bush (US — proclaimed 'New World Order')"],
+                changes:["15 new independent states","Russia inherited Soviet UN seat and nuclear arsenal","NATO and EU eastern expansion through the 1990s and 2000s","'End of history' optimism (Fukuyama) about liberal democracy","Roots of 21st-century Russia–West tensions seeded here","Yugoslavia simultaneously broke up — into a decade of war"]
+            } },
         { year:1994,  target:['710'],           kind:'peace',      severity:0.8, duration:30, label:'Mandela elected President of South Africa', emoji:'🕊' },
         { year:1997,  target:['826'],           kind:'innovation', severity:0.6, duration:30, label:'Dolly the sheep is cloned', emoji:'🐑' },
 
         // --- 21st century ---
-        { year:2001,  target:['840'],           kind:'war',        severity:0.9, duration:30, label:'September 11 attacks', emoji:'🏙' },
+        { year:2001,  target:['840','004','368','682','586'], kind:'war', severity:0.95, duration:30, label:'September 11 attacks', emoji:'🏙',
+            details:{
+                summary:"Nineteen al-Qaeda hijackers seized four American airliners. Two struck the World Trade Center in New York; one hit the Pentagon; the fourth crashed in Pennsylvania after passengers fought back. Nearly 3,000 people died — the deadliest terror attack in history.",
+                outcome:"The United States invaded Afghanistan within weeks (and Iraq in 2003). The 'Global War on Terror' reshaped two decades of foreign policy — vast surveillance expansion (PATRIOT Act), Guantánamo Bay, the rise of ISIS, drone warfare. Trillions spent. Hundreds of thousands killed. Taliban returned to Kabul in 2021.",
+                figures:["Osama bin Laden (al-Qaeda leader, killed 2011)","George W. Bush (US president)","Rudy Giuliani (NYC mayor)","Tony Blair (UK PM, joined the wars)","Mohammed Atta (lead hijacker)"],
+                changes:["~3,000 dead in the attacks themselves","War in Afghanistan, 2001-2021 → Taliban returned","War in Iraq, 2003-2011 → power vacuum, eventually ISIS","Massive surveillance expansion (NSA, PATRIOT Act)","Aviation security transformed worldwide","Birth of TSA, Department of Homeland Security","Long-running conflicts: Yemen, Pakistan tribal areas, Syria, Libya"]
+            } },
         { year:2004,  target:'southeast asia',  kind:'tsunami',    severity:1.0, duration:40, label:'Indian Ocean tsunami', emoji:'🌊' },
         { year:2007,  target:['840'],           kind:'innovation', severity:0.8, duration:30, label:'Apple unveils the iPhone', emoji:'📱' },
         { year:2008,  target:'world',           kind:'drought',    severity:0.7, duration:50, label:'Global financial crisis', emoji:'📉' },
@@ -167,9 +281,27 @@ const History = (() => {
         { year:2011,  target:['392'],           kind:'tsunami',    severity:0.95,duration:30, label:'Tōhoku earthquake and tsunami', emoji:'🌊' },
         { year:2011,  target:'middle east',     kind:'revolution', severity:0.8, duration:60, label:'The Arab Spring', emoji:'🔥' },
         { year:2016,  target:'world',           kind:'innovation', severity:0.7, duration:30, label:'AlphaGo defeats Lee Sedol', emoji:'🧠' },
-        { year:2019,  target:'world',           kind:'plague',     severity:1.0, duration:120,label:'COVID-19 pandemic', emoji:'🦠' },
-        { year:2022,  target:['804','643'],     kind:'war',        severity:0.95,duration:100,label:'War in Ukraine begins', emoji:'⚔' },
-        { year:2023,  target:'world',           kind:'innovation', severity:0.85,duration:40, label:'Generative AI reshapes every industry', emoji:'🧠' },
+        { year:2019,  target:'world', kind:'plague', severity:1.0, duration:120, label:'COVID-19 pandemic', emoji:'🦠',
+            details:{
+                summary:"A novel coronavirus (SARS-CoV-2) was first reported in Wuhan, China in December 2019. Within three months it was a worldwide pandemic; by 2023 it had recorded 7M+ deaths and an estimated true toll of 18–28M.",
+                outcome:"Most of the world entered some form of lockdown in spring 2020 — the largest peacetime restriction of movement in modern history. mRNA vaccines went from sequence to deployment in under a year. Remote work and digital adoption leaped forward by a decade. Supply chains, inflation, and political polarization were reshaped lastingly.",
+                figures:["Tedros Adhanom Ghebreyesus (WHO director-general)","Anthony Fauci (US public-health face)","Xi Jinping (China — initial concealment, then 'zero-COVID')","Boris Johnson (UK — hospitalized himself)","Ursula von der Leyen (EU vaccine procurement)","Katalin Karikó & Drew Weissman (mRNA pioneers, 2023 Nobel)"],
+                changes:["7M+ recorded deaths; ~18–28M excess deaths globally","First mRNA vaccines deployed at planetary scale","Remote work normalized — office real estate disrupted permanently","Trillions in fiscal stimulus → 2022–23 inflation surge","WHO emergency frameworks reformed","Renewed great-power tensions over pandemic origins"]
+            } },
+        { year:2022,  target:['804','643','276','840','826','616','752','246'], kind:'war', severity:1.0, duration:100, label:'Russia\'s full-scale invasion of Ukraine', emoji:'⚔',
+            details:{
+                summary:"Russian forces launched a full-scale invasion of Ukraine on 24 February 2022 from Belarus, the Crimea, and the eastern Donbas. The expected three-day offensive on Kyiv collapsed within weeks against fierce Ukrainian resistance — but the war ground on for years across the south and east.",
+                outcome:"Largest land war in Europe since 1945. Ukraine became the rallying cause of NATO and the EU; Finland and Sweden joined NATO, ending decades of neutrality. Russia was hit with unprecedented sanctions and energy markets convulsed. As of 2026 the war remains unresolved, with hundreds of thousands of casualties on both sides.",
+                figures:["Vladimir Putin (Russian president)","Volodymyr Zelenskyy (Ukrainian president, former actor)","Joe Biden / Donald Trump (US presidents during the conflict)","Olaf Scholz (Germany, ended decades of pacifist defence policy)","Jens Stoltenberg → Mark Rutte (NATO secretaries-general)"],
+                changes:["First major land war in Europe in 80 years","Finland (2023) and Sweden (2024) abandoned neutrality, joined NATO","European energy security overhauled — Russian gas mostly off the map","Massive Western military aid (HIMARS, F-16s, Patriots, etc.)","International Criminal Court warrant issued for Putin (2023)","Renewed urgency around drone, electronic and cyber warfare"]
+            } },
+        { year:2023,  target:'world', kind:'innovation', severity:0.9, duration:40, label:'Generative AI reshapes every industry', emoji:'🧠',
+            details:{
+                summary:"After ChatGPT's launch in November 2022, the public broke speed records adopting it (100M users in two months). 2023 brought GPT-4, Claude, Gemini and a generation of open-weight models that crossed graduate-level performance on most knowledge benchmarks.",
+                outcome:"Every industry began grappling with what to keep human and what to delegate. Massive capital flowed into chip and data-centre buildouts, with NVIDIA briefly the world's most valuable company. Regulation is being written in real time (EU AI Act, US executive orders, China's algorithm rules). The labour-market and education impacts are still unfolding.",
+                figures:["Sam Altman (OpenAI CEO)","Dario & Daniela Amodei (Anthropic founders)","Demis Hassabis (DeepMind / Google)","Jensen Huang (NVIDIA — supplied the chips)","Geoffrey Hinton (left Google in 2023 with public warnings)","Yoshua Bengio, Yann LeCun (Turing-Award AI pioneers)"],
+                changes:["First mass-market AI assistants (ChatGPT, Claude, Gemini)","Trillions in market cap migrated to AI-related stocks","Educational systems forced to rethink writing assignments and exams","Coding assistants entered every developer's workflow","First wave of AI-displacement debates","EU AI Act, US AI Safety Institute, UK AI Safety Summit","Existential-risk discussions reached governments and the UN"]
+            } },
         { year:2024,  target:'world',           kind:'drought',    severity:0.6, duration:40, label:'Record-breaking heatwaves', emoji:'🌡' },
 
         // --- Speculative future (optional, for time-travel play) ---
@@ -220,10 +352,22 @@ const History = (() => {
         { year:1967,  target:'middle east',     kind:'war',        severity:0.6, duration:20, label:'Six-Day War', emoji:'⚔' },
         { year:1973,  target:'world',           kind:'drought',    severity:0.7, duration:40, label:'Oil crisis shocks the world', emoji:'🛢' },
         { year:1978,  target:['156'],           kind:'innovation', severity:0.8, duration:50, label:'China begins reform and opening-up', emoji:'🏗' },
-        { year:1979,  target:['364'],           kind:'revolution', severity:0.8, duration:40, label:'Iranian Revolution', emoji:'🔥' },
+        { year:1979,  target:['364','840','826','368','376','682'], kind:'revolution', severity:0.9, duration:40, label:'Iranian Revolution', emoji:'🔥',
+            details:{
+                summary:"Mass protests swept Iran in 1978–79, forcing the US-backed Shah Mohammad Reza Pahlavi into exile. The exiled Shia cleric Ayatollah Khomeini returned to Tehran in February 1979. By April Iran was an Islamic Republic — a theocratic state unlike anything modern history had produced.",
+                outcome:"The first major Islamist revolution. The 444-day US embassy hostage crisis collapsed Carter's presidency. The Iran–Iraq War (1980–88) killed ~1M. Saudi-Iranian rivalry weaponized Sunni–Shia sectarianism across the Middle East. Iran's nuclear program would become a 21st-century flashpoint.",
+                figures:["Mohammad Reza Pahlavi (last Shah, exiled)","Ayatollah Ruhollah Khomeini (Supreme Leader)","Mohammad Mossadegh (1953 PM, ousted by CIA — context)","Shapour Bakhtiar (last royal PM)","Jimmy Carter (US president during the hostage crisis)"],
+                changes:["First successful Islamist revolution → state","Iran–US relations broke; sanctions persist 45+ years later","Iran–Iraq War, 1980–88: ~1M dead","Hezbollah (Lebanon) created with Iranian backing","Sunni–Shia rivalry intensified across the Middle East","Iranian nuclear program became a global crisis","Inspired Islamists from Algeria to Afghanistan"]
+            } },
         { year:1981,  target:'world',           kind:'plague',     severity:0.8, duration:80, label:'AIDS crisis begins', emoji:'🧬' },
         { year:1989,  target:['156'],           kind:'protest',    severity:0.8, duration:25, label:'Tiananmen Square protests', emoji:'✊' },
-        { year:1990,  target:['710'],           kind:'peace',      severity:0.8, duration:30, label:'Nelson Mandela is freed', emoji:'🕊' },
+        { year:1990,  target:['710','826','840'], kind:'peace', severity:0.9, duration:30, label:'Nelson Mandela is freed', emoji:'🕊',
+            details:{
+                summary:"After 27 years in prison, the leader of the African National Congress walked free from Victor Verster Prison on 11 February 1990. President F. W. de Klerk had unbanned the ANC nine days earlier — opening the door to negotiations that ended apartheid.",
+                outcome:"Apartheid was dismantled by 1994 and Mandela became South Africa's first democratically-elected president. Both men shared the 1993 Nobel Peace Prize. The Truth and Reconciliation Commission set a global template for transitional justice. Mandela served one term, then voluntarily stepped down — itself remarkable in post-colonial Africa.",
+                figures:["Nelson Mandela (released, future president)","F. W. de Klerk (last apartheid-era president)","Desmond Tutu (chaired the Truth & Reconciliation Commission)","Walter Sisulu (released alongside Mandela)","Winnie Madikizela-Mandela"],
+                changes:["End of apartheid in South Africa","Free elections in 1994 — Mandela became president","Truth & Reconciliation Commission held the past accountable","South Africa rejoined the Commonwealth and global community","Symbol for non-violent revolution worldwide","Influence on negotiated transitions in Northern Ireland, Colombia"]
+            } },
         { year:1992,  target:['076'],           kind:'festival',   severity:0.6, duration:30, label:'Earth Summit in Rio', emoji:'🌳' },
         { year:1994,  target:['646'],           kind:'war',        severity:1.0, duration:30, label:'Rwandan genocide', emoji:'☠' },
         { year:1999,  target:'europe',          kind:'prosperity', severity:0.6, duration:40, label:'Euro launches', emoji:'💶' },
@@ -562,19 +706,28 @@ const History = (() => {
         return HISTORICAL_EVENTS.filter(e => Math.abs(e.year - year) <= windowYears);
     }
 
-    /* Build a sim event from a historical entry. */
+    /* Mood lookup (inlined now that the sandbox parser was retired). */
+    const KIND_MOOD = {
+        earthquake:'bad', tsunami:'bad', volcano:'bad', flood:'bad', drought:'bad',
+        hurricane:'bad', tornado:'bad', wildfire:'bad', blizzard:'bad', storm:'warn',
+        meteor:'bad', plague:'bad', war:'bad', revolution:'warn', protest:'warn',
+        migration:'warn', prosperity:'good', peace:'good', healing:'good', miracle:'good',
+        festival:'good', harvest:'good', innovation:'good', baby_boom:'good',
+        aurora:'good', eclipse:'info', ufo:'info', zombies:'bad', dragons:'warn',
+        dance:'good', nightfall:'info', sunrise:'good',
+    };
+    /* Build an event payload from a historical entry. */
     function buildEvent(he) {
         const targets = resolveHistTarget(he.target);
-        const lib = EVENT_LIB[he.kind] || EVENT_LIB.storm;
+        const mood = KIND_MOOD[he.kind] || 'info';
         return {
             type:'event',
             kind: he.kind,
             severity: he.severity,
             duration: he.duration,
-            mood: lib.mood,
+            mood,
             label: he.label,
-            emoji: he.emoji || lib.emoji,
-            shake: !!lib.shake,
+            emoji: he.emoji || '•',
             targets,
             locationLabel: he.locationLabel || 'somewhere in history',
             historical: true,

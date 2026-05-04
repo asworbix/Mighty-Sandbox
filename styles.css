@@ -1586,6 +1586,110 @@ body.mode-gaia #newsModal .modal-head .panel-btn { display: none; } /* no close 
     line-height: 1.5;
 }
 
+/* ============ Event detail (History mode) ============ */
+
+.event-card {
+    width: min(640px, calc(100vw - 32px));
+    max-height: 86vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255,211,107,0.25);
+    box-shadow: 0 16px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,211,107,0.08);
+}
+.event-card .modal-title { color: var(--gold); }
+.ev-year-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.ev-year {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 200;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+}
+.ev-era {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+}
+.ev-summary {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0 0 18px;
+}
+.ev-section { margin-bottom: 16px; }
+.ev-section:last-child { margin-bottom: 0; }
+.ev-section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.ev-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.ev-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    transition: 0.15s;
+}
+.ev-flag:hover {
+    border-color: rgba(255,211,107,0.4);
+    background: rgba(255,211,107,0.08);
+}
+.ev-flag-emoji { font-size: 14px; }
+.ev-figures, .ev-changes {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+.ev-figures li, .ev-changes li {
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    border-bottom: 1px dashed rgba(255,255,255,0.04);
+}
+.ev-figures li:last-child, .ev-changes li:last-child { border-bottom: none; }
+.ev-figures li::before {
+    content: '◆';
+    color: var(--gold);
+    margin-right: 8px;
+    font-size: 10px;
+    vertical-align: 1px;
+}
+.ev-changes li::before {
+    content: '→';
+    color: var(--accent-2);
+    margin-right: 8px;
+}
+
+/* Highlight involved countries on the map while the detail panel is open. */
+body.event-spotlight .ev-spot {
+    /* placeholder — countries are highlighted via Map's own state setters */
+}
+
 /* ============ Achievements ============ */
 
 .layer-btn {

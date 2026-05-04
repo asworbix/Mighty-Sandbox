@@ -12,109 +12,7 @@ const News = (() => {
     /* A big pool of templates. Each template is a function (ctx) => string
        where ctx = { country, capital, culture, state, localHour, event }.
        Templates choose whether to fire based on ctx (returning null to skip). */
-    const TEMPLATES = [
-        // --- MARKETS / ECONOMICS ---
-        c => c.state.econ > 0.7 ? `${c.capital} — ${c.a2} markets notch fresh highs as tech and industry rally.` : null,
-        c => c.state.econ < 0.3 ? `${c.capital} — ${c.country.name}'s central bank signals emergency measures as markets slide.` : null,
-        c => c.state.econ > 0.8 ? `${c.capital} — foreign investors pile in as confidence in ${c.country.name} hits a record.` : null,
-        c => c.state.econ > 0.6 ? `${c.capital} — ${random(['tech','finance','manufacturing','tourism','shipping'])} sector posts a strong quarter.` : null,
-        c => c.state.econ < 0.4 ? `${c.capital} — unemployment rises as ${random(['factories','mines','ports','airports'])} scale back.` : null,
-        c => `${c.capital} — ${c.country.name}'s currency trades at ${(0.7 + c.state.econ * 0.6).toFixed(3)} against the benchmark.`,
 
-        // --- POLITICS / PEACE / CONFLICT ---
-        c => c.state.peace > 0.75 ? `${c.capital} — ${c.country.name} opens a new cultural exchange with neighbors.` : null,
-        c => c.state.peace < 0.3  ? `${c.capital} — protests swell in ${c.country.name}'s main squares as tensions rise.` : null,
-        c => c.state.peace < 0.2  ? `${c.capital} — state of emergency declared across ${c.country.name}.` : null,
-        c => c.state.peace > 0.85 ? `${c.capital} — parliament passes landmark legislation with broad cross-party support.` : null,
-        c => c.state.peace < 0.4  ? `${c.capital} — opposition calls for early elections.` : null,
-        c => c.state.peace > 0.65 ? `${c.capital} — diplomats from ${c.country.name} mediate a regional dispute.` : null,
-
-        // --- CULTURE / DAILY LIFE ---
-        c => c.localHour >= 5 && c.localHour < 10  ? `${c.capital} — rush-hour commuters pack the metro under a ${c.state.climate > 0.5 ? 'clear' : 'grey'} sky.` : null,
-        c => c.localHour >= 11 && c.localHour < 14 ? `${c.capital} — lunch-hour crowds spill into ${random(['cafés','food courts','plazas','street markets'])}.` : null,
-        c => c.localHour >= 18 && c.localHour < 22 ? `${c.capital} — nightlife lights up the ${random(['old town','riverfront','main boulevard','harbor'])}.` : null,
-        c => c.localHour >= 22 || c.localHour < 4  ? `${c.capital} — city sleeps; only ${random(['taxis','delivery scooters','night-shift crews','street cleaners'])} moving.` : null,
-        c => c.state.happy > 0.75 ? `${c.capital} — national mood survey puts happiness at a multi-year high.` : null,
-        c => c.state.happy < 0.3  ? `${c.capital} — mental-health charities report a surge in calls.` : null,
-        c => `${c.capital} — ${c.culture.name} ${random(['poets','filmmakers','musicians','chefs','designers'])} unveil a new ${random(['festival','series','exhibition','collection','tour'])}.`,
-        c => `${c.capital} — ${c.country.name}'s ${random(['football','cricket','basketball','handball','rugby'])} team ${random(['wins an upset','draws 1-1','tops the league','signs a new coach','heads into finals'])}.`,
-
-        // --- SCIENCE / TECHNOLOGY ---
-        c => c.state.econ > 0.7 ? `${c.capital} — researchers at a ${c.country.name} university publish breakthrough in ${random(['quantum','materials','AI','genomics','fusion','robotics','biotech'])}.` : null,
-        c => c.state.econ > 0.65 ? `${c.capital} — ${c.country.name} satellite ${random(['launches','docks','begins operations','transmits first images'])}.` : null,
-        c => c.state.econ > 0.6 ? `${c.capital} — a ${c.country.name}-based startup closes a ${random(['Series A','Series B','Series C','mega-round'])} at ${Math.floor(20 + Math.random()*400)}M.` : null,
-
-        // --- HEALTH / CLIMATE ---
-        c => c.state.health < 0.4 ? `${c.capital} — hospitals in ${c.country.name} stretched as ${random(['respiratory illnesses','heat-related cases','food-borne outbreaks'])} spike.` : null,
-        c => c.state.health > 0.8 ? `${c.capital} — ${c.country.name} posts record life-expectancy gains.` : null,
-        c => c.state.climate < 0.3 ? `${c.capital} — air quality alert issued; residents advised to stay indoors.` : null,
-        c => c.state.climate < 0.35 ? `${c.capital} — reservoirs across ${c.country.name} hit historic lows.` : null,
-        c => c.state.climate > 0.75 ? `${c.capital} — green corridors expand as ${c.country.name} hits climate targets early.` : null,
-
-        // --- TRENDING / SOCIAL ---
-        c => `${c.capital} — #${random(['CapitalSunset','MondayMood','LocalEats','NightDrive','Rooftops','MorningRun','SubwayLife','StreetArt','OneMoreSong','GoodNewsDay'])} is trending on ${c.country.name}'s social feeds.`,
-        c => `${c.capital} — viral clip of ${random(['a dancing grandmother','a chess-playing cat','a rooftop violinist','an old-town busker','a fire-juggling monk'])} racks up millions of views.`,
-        c => `${c.capital} — ${random(['bakery','bookshop','noodle stall','vinyl store','arcade'])} in the old quarter goes viral.`,
-
-        // --- TRAVEL / TOURISM ---
-        c => c.state.peace > 0.6 && c.state.econ > 0.5 ? `${c.capital} — ${c.country.name} sees record tourist arrivals this ${random(['quarter','season','month'])}.` : null,
-        c => c.state.peace < 0.4 ? `${c.capital} — several embassies issue travel advisories for ${c.country.name}.` : null,
-
-        // --- CULTURAL (culture-driven) ---
-        c => `${c.capital} — ${c.culture.signature} ${random(['tea shops','coffee houses','night markets','corner stores','bathhouses'])} see brisk business.`,
-
-        // --- LOCAL TIME FLAVOR ---
-        c => c.localHour === 12 ? `${c.capital} — church / mosque / temple bells mark noon across ${c.country.name}.` : null,
-        c => c.localHour === 6  ? `${c.capital} — the ${c.country.name} dawn service goes live; birds outside the studio.` : null,
-        c => c.localHour === 0  ? `${c.capital} — fireworks for no reason at midnight; no one complains.` : null,
-    ];
-
-    const EVENT_HEADLINES = {
-        earthquake: c => `BREAKING — ${c.capital}: seismographs just jolted across ${c.country.name}. Aftershocks expected.`,
-        tsunami:    c => `BREAKING — ${c.capital}: coastal alerts sound, ${c.country.name} evacuates low-lying districts.`,
-        volcano:    c => `BREAKING — ${c.capital}: ash column rises over ${c.country.name}; flights rerouted.`,
-        flood:      c => `BREAKING — ${c.capital}: rivers break their banks across ${c.country.name}.`,
-        drought:    c => `${c.capital}: ${c.country.name}'s farmers call on the government as drought deepens.`,
-        hurricane:  c => `BREAKING — ${c.capital}: ${c.country.name} braces as the storm makes landfall.`,
-        tornado:    c => `BREAKING — ${c.capital}: tornado warning across ${c.country.name}.`,
-        wildfire:   c => `BREAKING — ${c.capital}: smoke blankets ${c.country.name} as crews battle flames.`,
-        blizzard:   c => `${c.capital}: ${c.country.name} shuts down as a blizzard buries roads.`,
-        storm:      c => `${c.capital}: severe weather warnings across ${c.country.name}.`,
-        meteor:     c => `UNCONFIRMED — ${c.capital}: streak of fire reported over ${c.country.name}.`,
-        prosperity: c => `${c.capital}: ${c.country.name}'s markets lead the region — optimism at multi-year highs.`,
-        peace:      c => `${c.capital}: peace deal signed — ${c.country.name} lifts restrictions.`,
-        healing:    c => `${c.capital}: ${c.country.name} health ministry reports steep drop in cases.`,
-        miracle:    c => `${c.capital}: "miraculous" event in ${c.country.name} draws scholars and pilgrims.`,
-        festival:   c => `LIVE — ${c.capital}: ${c.country.name}'s streets are packed for the festival.`,
-        harvest:    c => `${c.capital}: ${c.country.name}'s farmers report a record harvest.`,
-        innovation: c => `${c.capital}: ${c.country.name} researchers announce a breakthrough.`,
-        baby_boom:  c => `${c.capital}: ${c.country.name}'s hospitals report a sharp rise in births.`,
-        war:        c => `BREAKING — ${c.capital}: ${c.country.name} is at war.`,
-        revolution: c => `BREAKING — ${c.capital}: crowds pour into ${c.country.name}'s central square.`,
-        protest:    c => `${c.capital}: ${c.country.name} sees its largest protest in a generation.`,
-        migration:  c => `${c.capital}: ${c.country.name} braces for a wave of arrivals.`,
-        plague:     c => `BREAKING — ${c.capital}: ${c.country.name}'s health system battles a fast-moving outbreak.`,
-        aurora:     c => `${c.capital}: skies above ${c.country.name} turn green and purple — aurora alert.`,
-        eclipse:    c => `${c.capital}: eclipse passes over ${c.country.name}; crowds gather to watch.`,
-        ufo:        c => `UNCONFIRMED — ${c.capital}: multiple ${c.country.name} residents film an unidentified craft.`,
-        zombies:    c => `${c.capital}: ${c.country.name} issues containment orders amid an unexplained outbreak.`,
-        dragons:    c => `${c.capital}: enormous winged shapes photographed over ${c.country.name}. Experts baffled.`,
-        dance:      c => `LIVE — ${c.capital}: impromptu street dance erupts across ${c.country.name}.`,
-    };
-
-    const CATEGORIES = {
-        breaking:  item => item.priority >= 0.85,
-        politics:  item => /parliament|elections|peace|war|protest|revolution|embass|emergency|opposition/i.test(item.text),
-        markets:   item => /market|currency|investors|sector|unemployment|startup|M\b|quarter/i.test(item.text),
-        culture:   item => /festival|musicians|chefs|designers|filmmakers|viral|trend|bakery|bookshop/i.test(item.text),
-        science:   item => /research|satellite|breakthrough|quantum|AI|genomics|fusion/i.test(item.text),
-        climate:   item => /climate|air quality|reservoirs|drought|heat|storm|aurora|eclipse/i.test(item.text),
-        life:      item => /commuters|lunch|nightlife|metro|midnight|dawn|birds|bells|rooftop/i.test(item.text),
-        sports:    item => /football|cricket|basketball|handball|rugby|league|finals|coach/i.test(item.text),
-    };
-
-    const items = [];          // Gaia feed — live from simulation
-    const MAX_ITEMS = 220;
     let lastRefresh = 0;
     let world_tab = 'gaia';    // 'gaia' | 'terra'
 
@@ -372,95 +270,12 @@ const News = (() => {
 
     function init(worldRef) {
         world = worldRef;
-        // seed with a first batch
-        for (let i = 0; i < 36; i++) tickOnce(true);
-        render();
+        // The procedural sandbox news generator is gone. The site is now
+        // strictly the live wire (Gaia) plus the history explorer.
     }
 
-    /* Run every frame; actually emits a few items per second. Only
-       re-renders when the Gaia world is visible — Terra doesn't mutate
-       every 180ms. */
-    function tick(dt) {
-        lastRefresh += dt;
-        if (lastRefresh < 180) return;
-        lastRefresh = 0;
-        for (let i = 0; i < 3; i++) tickOnce(false);
-        if (world_tab === 'gaia') render();
-    }
+    function tick(_dt) { /* no-op — live data refreshes on its own timer */ }
 
-    function tickOnce(initial) {
-        const ctx = sampleCountry();
-        if (!ctx) return;
-        let text = null;
-        let priority = 0.4;
-        if (ctx.event) {
-            const fn = EVENT_HEADLINES[ctx.event.kind];
-            if (fn) { text = fn(ctx); priority = 0.85 + Math.random()*0.15; }
-        }
-        if (!text) {
-            const pool = TEMPLATES.slice().sort(() => Math.random() - 0.5);
-            for (const fn of pool) {
-                try { text = fn(ctx); } catch(e) { text = null; }
-                if (text) break;
-            }
-        }
-        if (!text) return;
-        const stamp = formatLocalStamp(ctx);
-        items.unshift({
-            id: Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-            text,
-            priority,
-            stamp,
-            country: ctx.country,
-            capital: ctx.capital,
-            cid: ctx.cid,
-            time: initial ? Date.now() - Math.random() * 9e5 : Date.now(),
-        });
-        if (items.length > MAX_ITEMS) items.length = MAX_ITEMS;
-    }
-
-    function sampleCountry() {
-        // weight by population so bigger countries produce more news
-        const ids = ALL_COUNTRY_IDS;
-        let total = 0;
-        const weights = ids.map(id => {
-            const s = world.countryState[id];
-            const w = s ? Math.sqrt(s.pop) + 0.4 : 0.4;
-            total += w;
-            return w;
-        });
-        let roll = Math.random() * total;
-        let cid = ids[0];
-        for (let i = 0; i < ids.length; i++) {
-            roll -= weights[i];
-            if (roll <= 0) { cid = ids[i]; break; }
-        }
-        const country = COUNTRIES[cid];
-        if (!country) return null;
-        const state = world.countryState[cid];
-        const capital = CAPITALS[cid] || country.name;
-        const culture = CULTURES[country.culture];
-        const a2 = ISO_NUM_TO_A2[cid] || '';
-
-        const utcH = world.clock.getUTCHours() + world.clock.getUTCMinutes()/60;
-        let localHour = Math.floor(((utcH + country.tz) % 24 + 24) % 24);
-
-        // Is there a live event in this country?
-        let event = null;
-        for (const ev of Events.active) {
-            if (ev.targets && ev.targets.includes(cid)) { event = ev; break; }
-        }
-
-        return { cid, country, capital, culture, state, localHour, event, a2 };
-    }
-
-    function formatLocalStamp(ctx) {
-        const utcH = world.clock.getUTCHours() + world.clock.getUTCMinutes()/60;
-        const lh = ((utcH + ctx.country.tz) % 24 + 24) % 24;
-        const h = Math.floor(lh);
-        const m = Math.floor((lh - h) * 60);
-        return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
-    }
 
     function render() {
         const modal = document.getElementById('newsModal');
@@ -487,31 +302,8 @@ const News = (() => {
         const panel = document.getElementById('newsList');
         if (!panel) return;
 
-        if (world_tab === 'terra') {
-            return renderTerraList(panel);
-        }
-
-        // GAIA
-        const active = document.querySelector('.news-tab.gaia-tab.active');
-        const cat = active?.dataset.cat || 'all';
-        const q = document.getElementById('newsSearch')?.value?.trim().toLowerCase() || '';
-        const filter = cat === 'all' ? null :
-            (item) => (CATEGORIES[cat] && CATEGORIES[cat](item));
-        const frag = document.createDocumentFragment();
-        let shown = 0;
-        for (const item of items) {
-            if (filter && !filter(item)) continue;
-            if (q) {
-                const hay = (item.text + ' ' + (item.country?.name || '') + ' ' + (item.capital || '')).toLowerCase();
-                if (!hay.includes(q)) continue;
-            }
-            if (shown >= 90) break;
-            frag.appendChild(renderItem(item));
-            shown++;
-        }
-        panel.innerHTML = '';
-        panel.appendChild(frag);
-        if (shown === 0) panel.innerHTML = '<li class="news-empty">no dispatches match your filter.</li>';
+        // Always live (Terra) — the procedural feed is gone.
+        return renderTerraList(panel);
     }
 
     function renderTerraList(panel) {
@@ -634,21 +426,6 @@ const News = (() => {
         document.querySelectorAll('.news-loc-chip').forEach(c => {
             c.classList.toggle('active', c.dataset.loc === terraActiveLocation);
         });
-    }
-
-    function renderItem(item) {
-        const li = document.createElement('li');
-        li.className = 'news-item' + (item.priority >= 0.85 ? ' breaking' : '');
-        li.innerHTML = `
-            <div class="news-head">
-                <span class="news-flag">${flagEmoji(item.cid)}</span>
-                <span class="news-city">${item.capital}</span>
-                <span class="news-stamp">${item.stamp} local</span>
-            </div>
-            <div class="news-body">${item.text}</div>
-        `;
-        li.addEventListener('click', () => Main.travelTo && Main.travelTo(world.clock.getUTCFullYear()) && 0 /* no-op; expose hook later */ );
-        return li;
     }
 
     function open() {
